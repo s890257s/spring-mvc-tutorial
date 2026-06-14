@@ -13,8 +13,8 @@
   - [1. 資料傳輸危機：Entity 的暴露風險與 DTO 防護機制](#CH3-2-1)
   - [2. 轉換實作技巧：開發常見五大策略推演](#CH3-2-2)
 - [3-3 企業級開發模式：從 MVC 到三層架構](#CH3-3)
-  - [1. 什麼是 MVC (Model-View-Controller)？](#CH3-3-1)
-  - [2. 進入企業級開發：三層架構 (Three-Tier Architecture)](#CH3-3-2)
+  - [1. 什麼是 MVC Model-View-Controller？](#CH3-3-1)
+  - [2. 進入企業級開發：三層架構 Three-Tier Architecture](#CH3-3-2)
 - [3-4 處理二進位資料：檔案上傳與儲存策略](#CH3-4)
   - [1. 表單 enctype 設定與 MultipartFile 介面操作](#CH3-4-1)
   - [2. 實作：將圖片轉為 byte[] 存入資料庫](#CH3-4-2)
@@ -36,7 +36,8 @@
 **🤔 為什麼需要它**  
 Spring Boot 預設建立的 Web 專案並未包含資料庫工具，也無從得知要連線到哪裡。因此開發首要步驟便是：
 
-1. **補足依賴**：引用「Spring Data JPA」來操作資料庫，以及負責底層通訊的「MSSQL JDBC Driver」。
+1. **補足依賴**
+   引用「Spring Data JPA」來操作資料庫，以及負責底層通訊的「MSSQL JDBC Driver」。
 2. **設定連線對象**：在 `application.properties` 配置連線字串與帳號密碼，供應用程式於啟動時尋找並配對。
 
 **💻 實作範例：第一步、加入 Maven 依賴**
@@ -58,7 +59,6 @@ Spring Boot 預設建立的 Web 專案並未包含資料庫工具，也無從得
         </dependency>
 ```
 
-> [!NOTE]
 > 💡 **知識補充：資料庫操作層的階層關係**
 > 上述引入的套件在系統底層是層層遞進的合作關係。我們所使用的 Repository 實際上是透過以下架構與資料庫溝通的：
 >
@@ -120,7 +120,6 @@ spring.sql.init.data-locations=classpath:data.sql
 
 連線建立成功後，接下來需建立資料庫的初始化 SQL 腳本，以及 Java 物件與資料庫之間的映射關係，也就是 ORM 映射。
 
-> [!WARNING]
 > ⚠️ **環境安全須知：嚴禁於正式環境啟用自動初始化**
 > 無論採用上述哪一種資料庫初始化機制，在**正式環境**或是**團隊共用測試伺服器**中，切記皆不可開啟自動建表或 SQL 執行腳本功能，務必確認為 `ddl-auto=none` 與 `init.mode=never`，否則極易導致線上資料被清空或意外覆寫！
 > 實務上，建議透過**多重設定檔分離**，例如將配置切分為開發專用的 `application-dev.properties` 與上線用的 `application-prod.properties`來達到最安全的防護。
@@ -425,10 +424,9 @@ public class Initialize implements ApplicationRunner { // 實作 ApplicationRunn
 **📖 核心觀念：Service 層的邊界**  
 為防範上述系統性的風險，建議在資料傳遞時遵循以下原則：
 
-> [!IMPORTANT]
 > **始終記得觀念：「只要資料離開 Service 層，就必須轉型為 DTO！」**
 
-所有由 Service 往外輸出給 Controller 的物件，都必須是一個結構解耦、專為當下需求量身打造的全新載體，我們稱之為 Data Transfer Object (DTO，資料傳輸物件)。
+所有由 Service 往外輸出給 Controller 的物件，都必須是一個結構解耦、專為當下需求量身打造的全新載體，我們稱之為 資料傳輸物件 Data Transfer Object DTO。
 
 **🛠️ 實戰解析：DTO 的常見情境與優勢**
 
@@ -455,7 +453,7 @@ public class MemberProfileDto {
 ```
 
 **2. 多張表格資料合併：扁平化設計**  
-前端畫面常需要顯示**跨資料表**的綜合資訊。與其讓畫面去處理複雜的物件關聯層級，不如利用 DTO 先在後端將多張表的重點欄位「合併」，除了能大幅提升畫面綁定的便利性，更能藉此避開 Hibernate 常見的「延遲載入例外 (Lazy Loading Exception)」。
+前端畫面常需要顯示**跨資料表**的綜合資訊。與其讓畫面去處理複雜的物件關聯層級，不如利用 DTO 先在後端將多張表的重點欄位「合併」，除了能大幅提升畫面綁定的便利性，更能藉此避開 Hibernate 常見的「延遲載入例外 Lazy Loading Exception」。
 
 ```java
 // ✅ DTO: 整合了 Order, Member, Product 三個 Entity 中必要的檢視欄位
@@ -467,7 +465,6 @@ public class OrderDetailDto {
 }
 ```
 
-> [!NOTE]
 > 💡 **知識補充：什麼是延遲載入例外 Lazy Loading Exception？**
 > JPA 為了節省效能，查詢資料時，預設不會把「關聯的表格內容」一併撈出。例如，我們查了一筆訂單，系統不會主動去抓這筆訂單的會員與商品細節，這個機制被稱為「延遲載入」。
 >
@@ -498,7 +495,6 @@ public class EventItemDto {
 
 那我們該如何將 Entity 合理轉換為 DTO？實務上有幾種不同層級的做法，它們各自有適合的情境，以下將循序漸進介紹五種常見的轉換策略：
 
-> [!TIP]
 > 💡 **學習指引**
 > 初學者建議先從「選項一到選項三」的手動轉換開始練習，確實感受資料流動與物件封裝的過程；等到專案規模變大，覺得寫賦值程式碼很煩躁時，再來學習「選項五：MapStruct」一勞永逸。
 
@@ -568,7 +564,7 @@ public class UserMapperUtil {
 
 #### 選項四：使用 Spring BeanUtils 動態複製
 
-就算抽離為 MapperUtil，依然要手寫那幾十行的 `set()` 與 `get()`。於是，開發者將目光投向了自動化工具。Spring 原生內建了 `BeanUtils`，能透過 Java 的 Reflection（反射）機制，在執行時動態比對並將兩個物件中「名稱一樣的屬性」複製過去。
+就算抽離為 MapperUtil，依然要手寫那幾十行的 `set()` 與 `get()`。於是，開發者將目光投向了自動化工具。Spring 原生內建了 `BeanUtils`，能透過 Java 的 反射 Reflection 機制，在執行時動態比對並將兩個物件中「名稱一樣的屬性」複製過去。
 
 ```java
 import org.springframework.beans.BeanUtils;
@@ -702,9 +698,8 @@ public interface UserMapper {
 
 這就是編譯生成技術強大的地方！透過這幾個直觀的 `@Mapping` 宣告，MapStruct 就會在幕後生成效能極好、且自帶 `null` 安全檢查以及迴圈迭代的純 Java `get/set` 原始程式碼。
 
-> [!NOTE]
 > 💡 **知識補充：MapStruct 為何效能頂尖？**
-> 很多人會疑惑，這不就跟 BeanUtils 類似嗎？其實不然。它**不會**在系統「執行期間(Runtime)」去慢慢比對 Reflection，而是在 Java 程式碼「編譯期間(Compile Time)」的階段，自動幫你讀懂這個 Interface 接口，然後在幕後建立 `.class` 檔，「偷偷幫你寫出選項三的 `MapperUtil`」的手動 Mapping 程式碼。
+> 很多人會疑惑，這不就跟 BeanUtils 類似嗎？並非如此。它**不會**在系統「執行期間 Runtime」去慢慢比對 Reflection，而是在 Java 程式碼「編譯期間 Compile Time」的階段，自動幫你讀懂這個 Interface 接口，然後在幕後建立 `.class` 檔，「偷偷幫你寫出選項三的 `MapperUtil`」的手動 Mapping 程式碼。
 
 - **優點**：兼具了 `BeanUtils` 的「免手寫便利」以及選項一的「高效能」與「型別安全機制」。能大幅度消弭瑣碎的轉換程式碼實作，是往後深入企業級系統與微服務架構時，非常關鍵的技能！
 - **缺點**：當然就是要多學一個技術棧，並且要注意 `pom.xml` 中它與 Lombok 載入順序的配置，會增加些許認知負擔。但隨著專案經驗的累積，這點額外學習成本很快就會被它帶來的效率提升抵消掉。
@@ -726,7 +721,7 @@ public interface UserMapper {
 
 我們已經學會了資料庫連線、Entity 定義，也理解了為何要用 DTO 做安全隔離。接下來要拼上最關鍵的一塊拼圖——職責分層。許多新手常將 MVC 與三層架構混淆，我們必須在此釐清它們的涵義與各自的職責邊界。
 
-### <a id="CH3-3-1"></a>[1. 什麼是 MVC (Model-View-Controller)？](#toc)
+### <a id="CH3-3-1"></a>[1. 什麼是 MVC Model-View-Controller？](#toc)
 
 **📍 單元目標**  
 理解經典的 MVC 設計模式，以及它如何處理使用者與 Web 應用程式的互動。
@@ -749,10 +744,10 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
   </div>
 </div>
 
-### <a id="CH3-3-2"></a>[2. 進入企業級開發：三層架構 (Three-Tier Architecture)](#toc)
+### <a id="CH3-3-2"></a>[2. 進入企業級開發：三層架構 Three-Tier Architecture](#toc)
 
 **🤔 只有 MVC 夠用嗎？**  
-在早期的簡單系統中，Controller 除了接收請求，還常得兼顧「複雜的商業運算規則 (如折扣計算)」，甚至親自去「存取資料庫」。這會導致 Controller 膨脹成所謂的「上帝類別 (God Class)」，使得程式碼難以維護與重用。
+在早期的簡單系統中，Controller 除了接收請求，還常得兼顧「複雜的商業運算規則 (如折扣計算)」，甚至親自去「存取資料庫」。這會導致 Controller 膨脹成所謂的「上帝類別 God Class」，使得程式碼難以維護與重用。
 
 為了解決這個問題，業界演進出了**三層架構** 規範，將系統解耦為「表現層、邏輯層及資料層」。**MVC 實際上只涵蓋了三層架構中的「Web 表現層」！**
 
@@ -772,7 +767,6 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
   </div>
 </div>
 
-> [!NOTE]
 > 💡 **知識補充：常見的 Package 分類方法**
 >
 > 在實務開發中，我們通常不會將所有程式碼放在同一個路徑下，而是透過套件（Package）來將不同職責的程式碼分門別類。以下是業界常見的分層分類法，**這並非絕對的標準或規定，而是團隊開發時為了保持架構清晰的常見約定：**
@@ -797,7 +791,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 >
 > 📂 **專案結構較大時：功能驅動分類**
 >
-> 上方的「依職責分層（Package by Layer）」適合中小型專案。當專案結構極大、擁有很多獨立功能模組時，團隊可以考慮改採**依功能分類（Package by Feature）**，讓每個模組的關聯程式碼集中一處，方便獨立維護甚至拆分微服務：
+> 上方的「依職責分層 Package by Layer」適合中小型專案。當專案結構極大、擁有很多獨立功能模組時，團隊可以考慮改採**依功能分類 Package by Feature**，讓每個模組的關聯程式碼集中一處，方便獨立維護甚至拆分微服務：
 >
 > ```text
 > (依功能分類範例)
@@ -838,11 +832,9 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 | **`enctype="multipart/form-data"`** | HTML 表單屬性，宣告表單提交的內容將被分割為多個部分，允許同時夾帶文字與二進位檔案資料。 |
 | **`MultipartFile`**                 | Spring 提供的核心介面，負責在 Controller 封裝並接收前端傳送過來的檔案實體。             |
 
-> [!NOTE]
 > 💡 **知識補充**
 > 客戶端提交檔案時，檔案是以二進位串流方式傳輸。`MultipartFile` 介面將這個過程高度抽象化，讓我們能輕鬆呼叫 `.getOriginalFilename()` 取得檔名，或是 `.getSize()` 取得檔案容量。
 
-> [!IMPORTANT]
 > 💡 **深度解析：為什麼必須使用 `multipart/form-data`？**
 >
 > HTML 表單預設的編碼格式是 `application/x-www-form-urlencoded`。在這種格式下，瀏覽器會把所有欄位轉換成類似 `name=John&age=25` 的「純文字鍵值對」。因此，如果在預設格式下上傳圖片，**伺服器就只會收到圖片的檔名字串，完全無法取得實際的二進位圖檔內容！**
@@ -888,7 +880,6 @@ public class FileUploadController {
 }
 ```
 
-> [!WARNING]
 > ⚠️ **常見地雷**  
 > 忘記在 `<form>` 標籤中加上 `enctype="multipart/form-data"`。如果遺漏這個屬性，表單會使用預設的純文字編碼，此時後端的 `MultipartFile` 將會接收到 `null` 或拋出錯誤。
 
@@ -941,7 +932,7 @@ public class MemberController {
             // 呼叫 Service 完成資料儲存 (此處防呆假設更新 ID 為 1 的會員)
             memberService.updateMemberPhoto(1, photoBytes);
 
-            // 伺服器網頁重新導向 (Redirect) 回個人頁面
+            // 伺服器網頁重新導向 Redirect 回個人頁面
             return "redirect:/profile";
         } catch (IOException e) {
             return "redirect:/upload-error";
@@ -993,7 +984,6 @@ public class MemberPhotoController {
 }
 ```
 
-> [!NOTE]
 > 💡 **知識補充：防範破圖狀態**
 > 若會員未曾上傳照片，`member.getMemberPhoto()` 將為 `null`，直接回傳給前端會導致 `<img>` 破圖。實務上我們可提早判斷 `if (photoBytes == null)`，並利用 `ClassPathResource` 讀取一張專案內建預設圖片（如 `default-avatar.webp`）轉為 byte[] 返還。
 
@@ -1131,7 +1121,7 @@ public class LoginController {
 
 ### <a id="CH3-5-2"></a>[2. 實作會員表格 CRUD 與權限控管](#toc)
 
-**📍 任務目標**：顯示所有會員清單；非管理員僅能查看清單，具備管理員權限者可執行新增 (Create)、修改 (Update) 與刪除 (Delete)。
+**📍 任務目標**：顯示所有會員清單；非管理員僅能查看清單，具備管理員權限者可執行新增 Create、修改 Update 與刪除 Delete。
 
 **Controller 權限控管與對接**：
 
@@ -1177,9 +1167,8 @@ public class MemberController {
 }
 ```
 
-> [!IMPORTANT]
 > **前後端雙重防護原則**
-> 前端 Thymeleaf 利用 `th:if="${session.loginUser.isAdmin}"` 隱藏 CRUD 按鈕只是為了「使用者體驗 (UX)」，惡意使用者依然可以透過 Postman 直接打你的後端 API。因此在 `Controller` 操作資料前，**務必再次檢查 Session 內的權限標記**，不要單純只依賴畫面的防護！
+> 前端 Thymeleaf 利用 `th:if="${session.loginUser.isAdmin}"` 隱藏 CRUD 按鈕只是為了「使用者體驗 UX」，惡意使用者依然可以透過 Postman 直接打你的後端 API。因此在 `Controller` 操作資料前，**務必再次檢查 Session 內的權限標記**，不要單純只依賴畫面的防護！
 
 **Thymeleaf 前端範例片段 `member/list.html`**
 

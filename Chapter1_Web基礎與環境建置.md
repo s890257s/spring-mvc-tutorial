@@ -23,7 +23,6 @@
 
 ---
 
-> [!NOTE]
 > 💡 **推薦閱讀工具設定**
 > ![](./images/ch1/plugin_markdown_preview_enhanced.webp)
 > 為了能在 VS Code 內流暢瀏覽本講義的排版與圖表，建議安裝擴充套件 **Markdown Preview Enhanced**。
@@ -48,8 +47,7 @@
 
   在開發領域中，我們更關注的是**軟體伺服器**。透過安裝適當的軟體，任何電腦都能成為特定功能的伺服器，來接收與處理客戶端的 **Request 請求**。
 
-  > [!NOTE]
-  > 💡 **常見的伺服器類型**
+    > 💡 **常見的伺服器類型**
   > 包含 Web 網頁伺服器、資料庫伺服器、檔案伺服器與 Mail 郵件伺服器等。
 
 <div style="display: flex; justify-content: center; align-items: end; gap: 80px; margin: 10px 0 10px 0; border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
@@ -81,8 +79,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
   最常見的客戶端為 Chrome 與 Edge 等網頁瀏覽器，其他亦包含智慧型手機、穿戴裝置以及各種具備連網能力的物聯網 IoT 設備。
 
-  > [!TIP]
-  > 💡 **客戶端與伺服器的關係就像是：餐廳點餐**
+    > 💡 **客戶端與伺服器的關係就像是：餐廳點餐**
   >
   > - **客戶端**：正在點餐的「顧客」，主動提出需求。
   > - **伺服器**：負責接收訂單、處理食材並出餐的「廚房」。
@@ -205,8 +202,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
   - **子網路遮罩 Subnet Mask**
     用來區分 IP 位址中的「網路段」與「主機段」，例如常見的 `255.255.255.0`，幫助設備判斷目標 IP 是否與自己處在同一個區域網路內。
 
-    > [!NOTE]
-    > 💡 **知識補充（進階選讀）：如何計算子網路遮罩？**
+        > 💡 **知識補充（進階選讀）：如何計算子網路遮罩？**
     > 子網路遮罩與 IPv4 位址一樣是 32 位元，由 4 組 8 位元的二進位數字組成。
     > 計算規則是：**保留給「網路段」的部分全填 `1`，留給「主機段」的部分全填 `0`**。
     >
@@ -252,11 +248,11 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
   **Port 可用區間分類**
   在電腦網路中，Port 號的範圍是從 `0` 到 `65535`，總共 65536 個。根據 IANA（網際網路號碼分配局）的規定，大略被劃分為三大區間：
-  1. **知名 / 系統通訊埠 (Well-Known Ports, 0 ~ 1023)**
+  1. **知名 / 系統通訊埠 Well-Known Ports, 0 ~ 1023**
      保留給系統核心與常見網路服務，如 HTTP, FTP, SSH 等的專用 Port。一般應用程式不建議、且通常沒有權限去使用這個範圍。
-  2. **註冊通訊埠 (Registered Ports, 1024 ~ 49151)**
+  2. **註冊通訊埠 Registered Ports, 1024 ~ 49151**
      提供給一般軟體或企業應用程式，如連線資料庫 MySQL 3306、伺服器 Tomcat 8080 等使用的範圍。開發者在撰寫自訂服務時，通常會選擇這個區間的數字。
-  3. **動態 / 私有通訊埠 (Dynamic / Private Ports, 49152 ~ 65535)**
+  3. **動態 / 私有通訊埠 Dynamic / Private Ports, 49152 ~ 65535**
      通常是作業系統用來「動態分配」給客戶端發起連線時使用的臨時 Port。例如每次瀏覽器開新分頁連上網站，作業系統就會在這裡隨機挑一個 Port 使用，結束後隨即回收。
 
   **常見的系統與網路服務 Port 號一覽表**
@@ -279,7 +275,6 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
 **URI 統一資源識別碼 Uniform Resource Identifier** 是用來唯一標識網路上資源的一串字元。它可以是資源的名稱，也可以是資源的位置，或者兩者皆是。而我們平常熟悉的 **URL 網址** 就是 URI 的一種最常見形式。
 
-> [!NOTE]
 > 💡 **知識補充：URI、URL 與 URN 的差異**
 > 在網路上尋找資源時，除了 URI，我們也常聽到 URL 和 URN。它們的關係如下：
 >
@@ -303,13 +298,20 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
 當我們在瀏覽器送出這段網址後，直到網頁畫面順利渲染，背後實際上經歷了以下標準流程：
 
-1. **分析 URL 與 DNS 解析**：瀏覽器分析網址找出網域後，透過 DNS 機制將網域翻譯成目標伺服器的真實 IP 位址。
-2. **建立 TCP 連線**：找到 IP 後，客戶端與伺服器會透過「三次封包交換」確認彼此收發能力，建立起可靠的連線。
-3. **發送 HTTP Request**：瀏覽器將請求打包成標準格式，包含 HTTP 方法、標頭與參數等，並發送封包給伺服器。
-4. **Web 伺服器接收與處理**：伺服器軟體（如 Tomcat）接收網路封包後，轉換交由 Java 程式執行商業邏輯與資料庫存取。
-5. **回傳 HTTP Response**：伺服器將執行結果，包含狀態碼、網頁資料打包成回應封包，傳送回瀏覽器。
-6. **Browser 渲染畫面**：瀏覽器由上到下解析 HTML、建構 DOM 樹，途中並額外下載所需的 CSS/JS 等靜態資源後，最終渲染繪製出網頁。
-7. **斷開連線**：資料傳輸完成且短期不再通訊後，雙方中斷 TCP 連線以釋放資源。
+1. **分析 URL 與 DNS 解析**
+   瀏覽器分析網址找出網域後，透過 DNS 機制將網域翻譯成目標伺服器的真實 IP 位址。
+2. **建立 TCP 連線**
+   找到 IP 後，客戶端與伺服器會透過「三次封包交換」確認彼此收發能力，建立起可靠的連線。
+3. **發送 HTTP Request**
+   瀏覽器將請求打包成標準格式，包含 HTTP 方法、標頭與參數等，並發送封包給伺服器。
+4. **Web 伺服器接收與處理**
+   伺服器軟體（如 Tomcat）接收網路封包後，轉換交由 Java 程式執行商業邏輯與資料庫存取。
+5. **回傳 HTTP Response**
+   伺服器將執行結果，包含狀態碼、網頁資料打包成回應封包，傳送回瀏覽器。
+6. **Browser 渲染畫面**
+   瀏覽器由上到下解析 HTML、建構 DOM 樹，途中並額外下載所需的 CSS/JS 等靜態資源後，最終渲染繪製出網頁。
+7. **斷開連線**
+   資料傳輸完成且短期不再通訊後，雙方中斷 TCP 連線以釋放資源。
 
 <div style="display: flex; gap: 80px; margin: 10px 0 10px 0;
 border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
@@ -342,7 +344,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 **🤔 為什麼需要它**
 在進入框架之前，我們先試著「徒手」刻一個 Web Server 來接收請求，就會知道為什麼我們需要 Tomcat 等工具了。
 
-**📖 操作實驗範例**
+**💻 實作範例**
 
 我們可以透過 Java 原生的 `ServerSocket` 監聽特定的通訊埠（如 8080）來接收前端連線。以下的簡化程式碼展示了一個「基礎 Web Server」如何運作的原型：
 
@@ -410,9 +412,8 @@ public class MiniSimpleServer {
 }
 ```
 
-> [!TIP]
 > 💡 **編譯與執行指令**
-> 若你在 Windows 的命令提示字元 (cmd) 下編譯遇到中文註解報錯（如 `unmappable character`），請加上 `-encoding UTF-8` 參數，明確告知編譯器檔案的編碼格式：
+> 若你在 Windows 的命令提示字元 cmd 下編譯遇到中文註解報錯（如 `unmappable character`），請加上 `-encoding UTF-8` 參數，明確告知編譯器檔案的編碼格式：
 >
 > ```cmd
 > javac -encoding UTF-8 MiniSimpleServer.java
@@ -432,9 +433,8 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
   </div>
 </div>
 
-> [!NOTE]
 > 💡 **知識補充：Web Server 與 Web Container 的區別**
-> 在現代開發中，我們常把兩者的界線模糊化，但在查閱技術文件時，你會發現它們其實有著不同的分工：
+> 在現代開發中，我們常把兩者的界線模糊化，但在查閱技術文件時，你會發現它們有著不同的分工：
 >
 > - **Web Server 網頁伺服器（靜態資源）**
 >   例如 Apache、Nginx。負責處理靜態資源：收到請求後，直接從硬碟找出 HTML 等檔案回傳，但本身無法執行 Java 程式碼。
@@ -445,7 +445,6 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
 ### <a id="CH1-2-2"></a>[2. Tomcat Server](#toc)
 
-> [!NOTE]
 > 💡 **課前提示：本節為概念導向**
 > 在現代的 Java 專案開發中，例如我們後續會學到的 Spring Boot，Tomcat 引擎多半已經被內嵌整合。實務上我們極少需要自己下載 Tomcat 伺服器本體並進行手動調校。
 > 因此，本小節的重點在於**建立對底層運作機制的概念**，幫助你理解未來框架在背後究竟幫我們做了什麼事！
@@ -481,7 +480,6 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
 不過現在主流的 IDE（如 IntelliJ IDEA、Eclipse）和 Spring Boot 框架都已內嵌 Tomcat，通常只需點擊執行按鈕就能自動啟動。
 
-> [!WARNING]
 > 🚨 **常見陷阱：Port 8080 被佔用**
 > 初學者最常遇到的錯誤訊息是 `Web server failed to start. Port 8080 was already in use.(Web 伺服器啟動失敗。Port 8080 已被佔用)`。
 > 這是因為同一台電腦上，已經有其他的程式或是上一次開啟的 Tomcat 忘記關掉，正在佔用 `8080` 這組 Port 號。
@@ -573,7 +571,6 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 8. 在 `tomcat\bin` 目錄中，執行 `startup.bat` 啟動伺服器。
 9. 打開瀏覽器，輸入 `http://localhost:8080/demo-web/hello`，觀看結果。
 
-> [!NOTE]
 > 💡 **小結：Servlet 開發的初期體驗**
 > 走完上面這幾個步驟後，你可能已經感受到兩件事：
 >
@@ -635,7 +632,7 @@ public class Profile extends HttpServlet {
         // 透過 setAttribute 將變數存入 Request 作用域中，準備傳遞給視圖
         req.setAttribute("user", username);
 
-        // 轉發 (Forward) 請求至 profile.jsp。避免使用 out.write 處理 HTML，將畫面職責轉交 JSP
+        // 轉發 Forward 請求至 profile.jsp。避免使用 out.write 處理 HTML，將畫面職責轉交 JSP
         req.getRequestDispatcher("profile.jsp").forward(req, resp);
     }
 }
@@ -677,7 +674,6 @@ public class Profile extends HttpServlet {
 
 在畫面上你就能看見 JSP 成功讀取並印出了 Servlet 轉發過來的變數內容！
 
-> [!NOTE]
 > 💡 **小結：JSP 解決了什麼，還剩下什麼？**
 > JSP 搭配 EL 確實讓畫面開發變得容易許多，我們終於不用再一行行拼 HTML 了。但走到這裡，你可能也注意到：
 >
@@ -748,7 +744,6 @@ public class HelloWorldController {
 }
 ```
 
-> [!NOTE]
 > 💡 **邁向現代化開發**
 > 透過 DispatcherServlet 統一接管請求，正是 Spring MVC 能大幅提升開發體驗的秘密。這也是為何現代業界會全面擁抱 Spring 生態系的原因。
 > 接下來，就讓我們正式進入 Spring MVC 的環境建置吧！
@@ -794,7 +789,6 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 | **Spring Boot** | 框架的核心版本。                        | **最新穩定版 (無尾綴)** | `SNAPSHOT`：開發中的不穩定快照版本。<br>`M / RC`：發佈前的測試里程碑 / 候選版本。                                                                                                        |
 | **Java**        | 本次開發使用的 JDK 版本。               | **17 或 21 (LTS 版)**   | 選擇標註有 **LTS (長期支援)** 的版本，能確保專案獲得穩定的安全性更新。                                                                                                                   |
 
-> [!NOTE]
 > 💡 **知識補充：Maven 與 Gradle 的差異**
 >
 > | 比較項目     | Maven                             | Gradle                           |
@@ -832,7 +826,6 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 | **Packaging**     | `Jar`: 內建伺服器，現代微服務主流。<br>`War`: 需部署到外部伺服器的傳統格式。 | **Jar**                               |                                                               |
 | **Configuration** | 全域設定檔的格式，提供 `.properties` 與 `.yaml` 兩種選擇。                   | **Properties**                        | 實務上也常見使用 **YAML**，透過層級與縮排結構讓設定檔更易讀。 |
 
-> [!NOTE]
 > 💡 **知識補充：Properties 還是 YAML？**
 > 在建立專案的頁面上，即可直接選擇你要匯出的全域設定檔格式，也可以之後再進行修改。
 > 實務上常見使用 **YAML**，取代傳統 Properties 必須重複輸入相同結構文字的缺點，讓層級變得很清晰。
@@ -908,7 +901,6 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
 ### <a id="CH1-3-2"></a>[2. 專案匯入、開啟與目錄結構解析](#toc)
 
-> [!IMPORTANT]
 > 💡 **必須安裝的 VS Code 擴充套件 Extensions**
 > 為了讓後續開發 Spring Boot 更加順暢，請在 VS Code 中安裝以下擴充套件：
 >
@@ -937,7 +929,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 | `src/main/resources/templates/`             | 動態模板區          | 存放 Thymeleaf 的 HTML 網頁檔。這些網頁需要經過 Java 程式處理並替換畫面變數之後，才會傳送給前端瀏覽器。        |
 | `src/main/resources/application.properties` | 全域設定檔          | 整個專案的核心設定區。可在這改變啟動 Port 號、資料庫連線或專案元資料等設定。                                   |
 | `src/test/`                                 | 測試程式區          | 存放單元測試程式碼的地方。由 JUnit 等框架運作，用來驗證開發的主程式功能是否能如預期運作。                      |
-| `pom.xml`                                   | 專案依賴管理檔      | Maven 專案的設定檔。記載了專案基礎資訊，並管理專案需要引入哪些外部依賴模組 (Dependencies) 與版本號。           |
+| `pom.xml`                                   | 專案依賴管理檔      | Maven 專案的設定檔。記載了專案基礎資訊，並管理專案需要引入哪些外部依賴模組 Dependencies 與版本號。           |
 | `mvnw` 與 `mvnw.cmd`                        | 內嵌 Maven 啟動腳本 | 讓開發者就算電腦沒安裝 Maven，也能透過腳本指令編譯專案。 (`mvnw` 供 Mac/Linux，`mvnw.cmd` 供 Windows)          |
 | `.mvn/`                                     | 內嵌 Maven 工具包   | 存放 `mvnw` 啟動腳本運行時所需要的關聯設定與背景工具檔。                                                       |
 | `.gitignore`                                | Git 忽略清單設定檔  | 告訴 Git 該忽略哪些檔案，如編譯過後的 class 檔、密碼檔案或圖片檔案等等，避免將不必要的檔案上傳到版本控制系統。 |
@@ -955,7 +947,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 **💻 實作範例**
 
 1. 在 VS Code 畫面最左側目錄，點選箭頭圖示 `Run and Debug 執行與偵錯面板`，快捷鍵：CTRL + SHIFT + D。
-2. 點擊藍色字體的 `create a launch.json file (建立 launch.json 檔案)` 連結。
+2. 點擊藍色字體的 `建立 launch.json 檔案 create a launch.json file` 連結。
 3. 如果上方跳出清單讓你選擇環境，請點選 `Java`，這時 VS Code 就會自動幫你在專案底下生成一個 `.vscode` 資料夾，並包含專屬的 `launch.json` 設定檔。
 4. 打開 `launch.json` 觀察內容，它會根據你目前的類別名稱幫你自動產生部分設定，請調整成以下內容：
 
