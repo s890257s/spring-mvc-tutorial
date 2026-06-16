@@ -453,9 +453,32 @@ public class MiniSimpleServer {
                 InputStream in = clientSocket.getInputStream();
                 byte[] buffer = new byte[1024];
                 int readBytes = in.read(buffer);
+                String requestString = new String(buffer, 0, readBytes);
                 // 你會看到一堆諸如 GET / HTTP/1.1... 等由瀏覽器整理好的標準格式文字
                 System.out.println("=== 來自前端的請求內容 ===");
-                System.out.println(new String(buffer, 0, readBytes));
+                System.out.println(requestString);
+
+                // --- 解析 Query Path 與 Query String ---
+                String endpoint = "";
+                String queryString = "無";
+                String[] requestLines = requestString.split("\r\n");
+                if (requestLines.length > 0) {
+                    String firstLine = requestLines[0]; // 例如：GET /test?name=allen HTTP/1.1
+                    String[] requestParts = firstLine.split(" ");
+                    if (requestParts.length >= 2) {
+                        String url = requestParts[1]; // 例如：/test?name=allen
+                        int questionMarkIndex = url.indexOf("?");
+                        if (questionMarkIndex != -1) {
+                            endpoint = url.substring(0, questionMarkIndex);
+                            queryString = url.substring(questionMarkIndex + 1);
+                        } else {
+                            endpoint = url;
+                        }
+                        System.out.println("=== 請求解析結果 ===");
+                        System.out.println("端點(Endpoint): " + endpoint);
+                        System.out.println("查詢字串(Query String): " + queryString);
+                    }
+                }
 
                 // --- 2. 回應準備好的網頁內容 ---
                 OutputStream out = clientSocket.getOutputStream();
@@ -472,8 +495,12 @@ public class MiniSimpleServer {
                         <body style='background-color: #f8f9fa; font-family: sans-serif; text-align: center; padding-top: 50px;'>
                             <h1 style='color: #007bff;'>Hello I am a Hand-made Java Server!</h1>
                             <h3 style='color: #6c757d;'>這是我手刻的 Java 網頁伺服器回應！</h3>
+                            <div style='margin-top: 30px; padding: 20px; background-color: #fff; border-radius: 10px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                                <p style='color: #333; font-size: 18px; margin: 10px 0;'>端點(Endpoint): <strong style='color: #d63384;'>%s</strong></p>
+                                <p style='color: #333; font-size: 18px; margin: 10px 0;'>查詢字串(Query String): <strong style='color: #d63384;'>%s</strong></p>
+                            </div>
                         </body>
-                        """;
+                        """.formatted(endpoint, queryString);
 
                 String html = "<html>\n" + head + body + "</html>";
 
@@ -602,14 +629,14 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 **💻 實作範例**  
 **原生 Servlet 接收請求示範**
 
-依循以下步驟，建立一個傳統的 Maven Web 專案並撰寫一支 Servlet：
+依循以下步驟，建立一個傳統的 Maven Web 專案並撰寫一支 Servlet
 
 1. 準備好 Maven (`mvn`) 環境。
 2. 使用下方指令建立 Dynamic Web Project：
    ```cmd
-   .\mvnw.cmd archetype:generate "-DgroupId=com.example" "-DartifactId=demo-web" "-DarchetypeArtifactId=maven-archetype-webapp" "-DinteractiveMode=false"
+   .\mvnw.cmd archetype:generate "-DgroupId=com.example" "-DartifactId=demo" "-DarchetypeArtifactId=maven-archetype-webapp" "-DinteractiveMode=false"
    ```
-3. 在專案的 `pom.xml` 中加入 Servlet API 依賴。並為了解決中文註解編譯亂碼 (`unmappable character`) 的問題，請一併加入 `<properties>` 設定：
+3. 在專案的 `pom.xml` 中加入 Servlet API 依賴。並為了解決中文註解編譯亂碼 (`unmappable character`) 的問題，請一併加入 `<properties>` 設定
 
    ```xml
    <properties>
@@ -627,7 +654,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
    </dependency>
    ```
 
-4. 手動建立目錄 `demo-web\src\main\java`，並在目錄中建立 `HelloWorld.java`，最後將範例的 Servlet 貼上（此版本已補上所需的 `import`）：
+4. 手動建立目錄 `demo\src\main\java`，並在目錄中建立 `HelloWorld.java`，最後將範例的 Servlet 貼上
 
    ```java
    import jakarta.servlet.ServletException;
@@ -665,11 +692,336 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
 5. 輸入指令進行編譯與打包：
    ```cmd
-   .\mvnw.cmd -f demo-web\pom.xml clean package
+   .\mvnw.cmd -f demo\pom.xml clean package
    ```
-6. 在 `demo-web\target\` 中找到 `demo-web.war`，將它放到 `tomcat\webapps` 目錄中。
+6. 在 `demo\target\` 中找到 `demo.war`，將它放到 `tomcat\webapps` 目錄中。
 7. 在 `tomcat\bin` 目錄中，執行 `startup.bat` 啟動伺服器。
-8. 打開瀏覽器，輸入 `http://localhost:8080/demo-web/hello`，觀看結果。
+8. 打開瀏覽器，輸入 `http://localhost:8080/demo/hello`，觀看結果。
+
+---
+
+### 🎊 課堂彩蛋 Demo：體驗 Web 的無窮潛力
+
+> 💡 **本節為課堂體驗展示**
+>
+> 透過剛剛的範例，我們體會到底層複雜的網路通訊（TCP/IP、HTTP 封包解析）Tomcat 都已經幫我們處理好了。我們只需簡單地繼承 `HttpServlet`，就能專注在處理請求與回應上。
+>
+> 更棒的是，由於我們寫的是強大的 **Java**，所以我們擁有操作系統底層資源的能力，例如**持久化資料到硬碟**。同時，只要搭配一些現代 Web 技術（如 WebSocket），我們甚至能輕鬆實作出**多人即時互動**的有趣應用！
+
+#### Demo 1：將文字持久化至伺服器硬碟 (純 Servlet 實作)
+
+透過這個簡單的 `SaveTextServlet`，當我們在瀏覽器輸入 `http://[老師IP]:8080/demo/text/你好` 時，伺服器就會在硬碟的 `C:/temp/` 目錄下建立一個檔名為 `你好` 的實體檔案，達成資料持久化的效果！
+
+```java
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+// 攔截 /text/ 底下的所有請求
+@WebServlet("/text/*")
+public class SaveTextServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 1. 取得路徑中的使用者輸入部分 (例如 "/你好")，並去掉開頭的斜線
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || pathInfo.length() <= 1) {
+            resp.setContentType("text/html;charset=UTF-8");
+            resp.getWriter().println("請在網址後方輸入文字！例如: /text/hello");
+            return;
+        }
+
+        String userInput = pathInfo.substring(1);
+
+        // 2. 為了安全，過濾掉特殊符號，只保留中英文與數字 (無效符號會被直接剔除)
+        String safeFileName = userInput.replaceAll("[^a-zA-Z0-9\u4e00-\u9fa5]", "");
+
+        if (safeFileName.isEmpty()) {
+            resp.setContentType("text/html;charset=UTF-8");
+            resp.getWriter().println("無效的檔名！");
+            return;
+        }
+
+        // 3. 確保 C:/temp/ 目錄存在
+        File tempDir = new File("C:/temp/");
+        if (!tempDir.exists()) {
+            tempDir.mkdirs();
+        }
+
+        // 4. 在伺服器硬碟建立檔案並寫入內容 (持久化)
+        File newFile = new File(tempDir, safeFileName);
+        try (FileWriter writer = new FileWriter(newFile)) {
+            writer.write("這是由學生建立的檔案，內容是：" + userInput);
+        }
+
+        // 5. 回應瀏覽器
+        resp.setContentType("text/html;charset=UTF-8");
+        resp.getWriter().println("<h1>檔案已成功建立於伺服器硬碟：C:/temp/" + safeFileName + "</h1>");
+    }
+}
+```
+
+#### Demo 2：多人連線畫板 (WebSocket 實作)
+
+除了傳統的一問一答 (HTTP)，Web 開發也能透過 WebSocket 建立雙向的即時連線。
+
+**請在 `pom.xml` 中加入以下依賴**
+
+```xml
+<!-- WebSocket 伺服器端核心 API，提供 @ServerEndpoint 等標註 -->
+<dependency>
+    <groupId>jakarta.websocket</groupId>
+    <artifactId>jakarta.websocket-api</artifactId>
+    <version>2.1.0</version>
+    <scope>provided</scope>
+</dependency>
+
+<!-- WebSocket 客戶端 API，若要在 Java 中作為 Client 發起連線時使用 -->
+<!-- (雖然本範例是由前端 JavaScript 發起連線，但在建置 Java WebSocket 環境時通常會一併加入) -->
+<dependency>
+  <groupId>jakarta.websocket</groupId>
+  <artifactId>jakarta.websocket-client-api</artifactId>
+  <version>2.1.0</version>
+  <scope>provided</scope>
+</dependency>
+```
+
+**1. 後端 WebSocket 廣播器：**
+這支程式唯一的工作，就是把某位同學傳來的座標或文字，立刻「群發」給全班。
+
+```java
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerEndpoint;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+@ServerEndpoint("/ws")
+public class CanvasChatServer {
+    // 儲存全班連線的集合 (需考慮多執行緒安全)
+    private static Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
+    // 儲存歷史繪圖紀錄，讓後進來的連線也能看到畫布當前狀態
+    private static List<String> drawHistory = new CopyOnWriteArrayList<>();
+
+    @OnOpen
+    public void onOpen(Session session) {
+        sessions.add(session);
+        // 新連線建立時，把過往的繪圖紀錄一筆一筆傳給這位新同學
+        for (String history : drawHistory) {
+            try {
+                session.getBasicRemote().sendText(history);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @OnClose
+    public void onClose(Session session) { sessions.remove(session); }
+
+    @OnMessage
+    public void onMessage(String message, Session session) {
+        // 如果是畫圖訊息，就加入歷史紀錄
+        if (message.contains("\"type\":\"draw\"")) {
+            drawHistory.add(message);
+        }
+
+        // 收到任何座標或彈幕，直接廣播給全班所有人
+        synchronized (sessions) {
+            for (Session s : sessions) {
+                if (s.isOpen()) {
+                    try {
+                        s.getBasicRemote().sendText(message);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**2. 前端畫板 (`index.html`)：**
+包含了畫布監聽、連線邏輯，以及從右到左飛行的 CSS 彈幕特效。
+
+```html
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <title>連線畫板</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #222;
+      }
+      canvas {
+        display: block;
+        background: #fff;
+        cursor: crosshair;
+      }
+      #ui {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 10px;
+        border-radius: 10px;
+      }
+      input,
+      button,
+      select {
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: none;
+        outline: none;
+      }
+      button {
+        background: #ff5e5e;
+        color: white;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      /* 彈幕特效：從畫面右邊 (100vw) 飛到左邊 (-100%) */
+      .danmu {
+        position: absolute;
+        white-space: nowrap;
+        font-size: 32px;
+        font-weight: 900;
+        text-shadow: 2px 2px 4px #000;
+        animation: fly 7s linear forwards;
+        pointer-events: none;
+      }
+      @keyframes fly {
+        from {
+          left: 100vw;
+        }
+        to {
+          left: -100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="board"></canvas>
+    <div id="ui">
+      <select id="color" onchange="updateCursor()">
+        <option value="black">黑筆</option>
+        <option value="red">紅筆</option>
+        <option value="blue">藍筆</option>
+        <option value="#28a745">綠筆</option>
+        <option value="#ffffff">橡皮擦</option>
+      </select>
+      <input
+        type="text"
+        id="msg"
+        placeholder="輸入彈幕..."
+        onkeypress="if(event.key==='Enter') sendChat()"
+      />
+      <button onclick="sendChat()">發射彈幕</button>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("board");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const ws = new WebSocket(`ws://${location.host}/demo/ws`);
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "draw") {
+          ctx.beginPath();
+          ctx.moveTo(data.px, data.py);
+          ctx.lineTo(data.x, data.y);
+          ctx.strokeStyle = data.color;
+          ctx.lineWidth = data.width || 4;
+          ctx.stroke();
+        } else if (data.type === "chat") {
+          createDanmu(data.text);
+        }
+      };
+
+      let isDrawing = false,
+        px = 0,
+        py = 0;
+
+      // 電腦版滑鼠事件
+      canvas.onmousedown = (e) => {
+        isDrawing = true;
+        px = e.clientX;
+        py = e.clientY;
+      };
+      canvas.onmouseup = () => (isDrawing = false);
+      canvas.onmousemove = (e) => {
+        if (!isDrawing) return;
+        const x = e.clientX,
+          y = e.clientY,
+          color = document.getElementById("color").value;
+        const width = color === "#ffffff" ? 20 : 4;
+        ws.send(JSON.stringify({ type: "draw", px, py, x, y, color, width }));
+        px = x;
+        py = y;
+      };
+
+      // 根據選取的顏色更新游標樣式（若為橡皮擦則顯示圓圈範圍）
+      const updateCursor = () => {
+        const color = document.getElementById("color").value;
+        if (color === "#ffffff") {
+          const size = 20;
+          const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 1}" fill="none" stroke="black" stroke-width="1"/></svg>`;
+          const url = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+          canvas.style.cursor = `url('${url}') ${size / 2} ${size / 2}, crosshair`;
+        } else {
+          canvas.style.cursor = "crosshair";
+        }
+      };
+
+      // 取得輸入框內容，並透過 WebSocket 發送彈幕訊息
+      const sendChat = () => {
+        const msgInput = document.getElementById("msg");
+        if (msgInput.value.trim() !== "") {
+          ws.send(JSON.stringify({ type: "chat", text: msgInput.value }));
+          msgInput.value = "";
+        }
+      };
+
+      // 建立並渲染彈幕元素，7秒後（配合 CSS 動畫時間）自動移除
+      const createDanmu = (text) => {
+        const div = document.createElement("div");
+        div.className = "danmu";
+        div.innerText = text;
+        div.style.top = Math.random() * (window.innerHeight - 150) + "px";
+        div.style.color = `hsl(${Math.random() * 360}, 100%, 75%)`;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 7000);
+      };
+    </script>
+  </body>
+</html>
+```
 
 > 💡 **小結：Servlet 開發的初期體驗**
 > 走完上面這幾個步驟後，你可能已經感受到：
@@ -767,12 +1119,12 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
 #### <a id="CH1-3-1-1"></a>[1. 基礎開發選項 (Core Settings)](#toc)
 
-| 欄位名稱        | 說明與用途                              | 課程使用選項            | 備註                                                                                                                                                                                     |
-| :-------------- | :-------------------------------------- | :---------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 欄位名稱        | 說明與用途                              | 課程使用選項            | 備註                                                                                                                                                                                                                                                       |
+| :-------------- | :-------------------------------------- | :---------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Project**     | 決定專案的建置與模組管理工具。          | **Maven**               | `Maven` 是 Java 企業級後端應用最主流的建置與模組管理工具（本課程使用）。<br><br>`Gradle` 是另一款常在 Android 開發或需高度客製化時使用的建置工具。<br>介面上提供 `Gradle - Groovy`（傳統寫法）與 `Gradle - Kotlin`（現代官方推薦寫法）兩種設定檔語法選項。 |
-| **Language**    | 開發 Spring Boot 所使用的核心程式語言。 | **Java**                | `Kotlin` 現代化且與 Java 高度互通，為目前 Android 開發的官方主力語言。<br>`Groovy` 是發展較早的動態 JVM 語言。在現代新專案中已較少作為主力開發語言，多留存於特定的建置腳本或測試框架中。 |
-| **Spring Boot** | 框架的核心版本。                        | **最新穩定版 (無尾綴)** | `SNAPSHOT`：開發中的不穩定快照版本。<br>`M / RC`：發佈前的測試里程碑 / 候選版本。                                                                                                        |
-| **Java**        | 本次開發使用的 JDK 版本。               | **17 或 21 (LTS 版)**   | 選擇標註有 **LTS (長期支援)** 的版本，能確保專案獲得穩定的安全性更新。                                                                                                                   |
+| **Language**    | 開發 Spring Boot 所使用的核心程式語言。 | **Java**                | `Kotlin` 現代化且與 Java 高度互通，為目前 Android 開發的官方主力語言。<br>`Groovy` 是發展較早的動態 JVM 語言。在現代新專案中已較少作為主力開發語言，多留存於特定的建置腳本或測試框架中。                                                                   |
+| **Spring Boot** | 框架的核心版本。                        | **最新穩定版 (無尾綴)** | `SNAPSHOT`：開發中的不穩定快照版本。<br>`M / RC`：發佈前的測試里程碑 / 候選版本。                                                                                                                                                                          |
+| **Java**        | 本次開發使用的 JDK 版本。               | **17 或 21 (LTS 版)**   | 選擇標註有 **LTS (長期支援)** 的版本，能確保專案獲得穩定的安全性更新。                                                                                                                                                                                     |
 
 > 💡 **知識補充：Maven 與 Gradle 的差異**
 >
