@@ -700,13 +700,13 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
 ---
 
-### 🎊 課堂彩蛋 Demo：體驗 Web 的無窮潛力
+### 🎊 彩蛋：體驗 Web 的無窮潛力
 
 > 💡 **本節為課堂體驗展示**
 >
 > 透過剛剛的範例，我們體會到底層複雜的網路通訊（TCP/IP、HTTP 封包解析）Tomcat 都已經幫我們處理好了。我們只需簡單地繼承 `HttpServlet`，就能專注在處理請求與回應上。
 >
-> 更棒的是，由於我們寫的是強大的 **Java**，所以我們擁有操作系統底層資源的能力，例如**持久化資料到硬碟**。同時，只要搭配一些現代 Web 技術（如 WebSocket），我們甚至能輕鬆實作出**多人即時互動**的有趣應用！
+> 更棒的是，由於我們寫的是強大的 **Java**，所以我們擁有操作系統底層資源的能力，例如**持久化資料到硬碟**。同時，只要搭配一些現代 Web 技術如 WebSocket，我們甚至能輕鬆實作出**多人即時互動**的有趣應用！
 
 #### Demo 1：將文字持久化至伺服器硬碟 (純 Servlet 實作)
 
@@ -782,8 +782,8 @@ public class SaveTextServlet extends HttpServlet {
     <scope>provided</scope>
 </dependency>
 
-<!-- WebSocket 客戶端 API，若要在 Java 中作為 Client 發起連線時使用 -->
-<!-- (雖然本範例是由前端 JavaScript 發起連線，但在建置 Java WebSocket 環境時通常會一併加入) -->
+<!-- WebSocket 核心與客戶端 API -->
+<!-- 包含 Session, @OnMessage 等共用類別，即使只實作 Server 端，也必須加入此依賴才能正常編譯 -->
 <dependency>
   <groupId>jakarta.websocket</groupId>
   <artifactId>jakarta.websocket-client-api</artifactId>
@@ -793,7 +793,7 @@ public class SaveTextServlet extends HttpServlet {
 ```
 
 **1. 後端 WebSocket 廣播器：**
-這支程式唯一的工作，就是把某位同學傳來的座標或文字，立刻「群發」給全班。
+這支程式唯一的工作，就是把某位連線者傳來的座標或文字，立刻群發給全體連線者。
 
 ```java
 import jakarta.websocket.OnClose;
@@ -810,15 +810,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @ServerEndpoint("/ws")
 public class CanvasChatServer {
-    // 儲存全班連線的集合 (需考慮多執行緒安全)
+    // 儲存全部連線的集合
     private static Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
-    // 儲存歷史繪圖紀錄，讓後進來的連線也能看到畫布當前狀態
+    // 儲存歷史繪圖紀錄，讓後進的連線也能看到畫布當前狀態
     private static List<String> drawHistory = new CopyOnWriteArrayList<>();
 
     @OnOpen
     public void onOpen(Session session) {
         sessions.add(session);
-        // 新連線建立時，把過往的繪圖紀錄一筆一筆傳給這位新同學
+        // 新連線建立時，把過往的繪圖紀錄一筆一筆傳給這位新連線者
         for (String history : drawHistory) {
             try {
                 session.getBasicRemote().sendText(history);
@@ -864,63 +864,13 @@ public class CanvasChatServer {
     <meta charset="UTF-8" />
     <title>連線畫板</title>
     <style>
-      body,
-      html {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: #222;
-      }
-      canvas {
-        display: block;
-        background: #fff;
-        cursor: crosshair;
-      }
-      #ui {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 10px;
-        background: rgba(0, 0, 0, 0.6);
-        padding: 10px;
-        border-radius: 10px;
-      }
-      input,
-      button,
-      select {
-        padding: 10px;
-        font-size: 16px;
-        border-radius: 5px;
-        border: none;
-        outline: none;
-      }
-      button {
-        background: #ff5e5e;
-        color: white;
-        cursor: pointer;
-        font-weight: bold;
-      }
-
-      /* 彈幕特效：從畫面右邊 (100vw) 飛到左邊 (-100%) */
-      .danmu {
-        position: absolute;
-        white-space: nowrap;
-        font-size: 32px;
-        font-weight: 900;
-        text-shadow: 2px 2px 4px #000;
-        animation: fly 7s linear forwards;
-        pointer-events: none;
-      }
-      @keyframes fly {
-        from {
-          left: 100vw;
-        }
-        to {
-          left: -100%;
-        }
-      }
+      body, html { margin: 0;padding: 0;overflow: hidden;background: #222; }
+      canvas { display: block;background: #fff;cursor: crosshair; }
+      #ui {position: absolute;bottom: 20px;left: 50%;transform: translateX(-50%);display: flex;gap: 10px;background: rgba(0, 0, 0, 0.6);padding: 10px;border-radius: 10px;}
+      input, button, select { padding: 10px;font-size: 16px;border-radius: 5px;border: none;outline: none;}
+      button { background: #ff5e5e;color: white;cursor: pointer;font-weight: bold;}
+      .fly-text { position: absolute;white-space: nowrap;font-size: 32px;font-weight: 900;text-shadow: 2px 2px 4px #000;animation: fly 7s linear forwards;pointer-events: none;}
+      @keyframes fly { from { left: 100vw; } to { left: -100%; } }
     </style>
   </head>
   <body>
@@ -960,7 +910,7 @@ public class CanvasChatServer {
           ctx.lineWidth = data.width || 4;
           ctx.stroke();
         } else if (data.type === "chat") {
-          createDanmu(data.text);
+          createFlyText(data.text);
         }
       };
 
@@ -968,7 +918,7 @@ public class CanvasChatServer {
         px = 0,
         py = 0;
 
-      // 電腦版滑鼠事件
+      // 滑鼠事件
       canvas.onmousedown = (e) => {
         isDrawing = true;
         px = e.clientX;
@@ -986,7 +936,7 @@ public class CanvasChatServer {
         py = y;
       };
 
-      // 根據選取的顏色更新游標樣式（若為橡皮擦則顯示圓圈範圍）
+      // 根據選取的顏色更新游標樣式，若為橡皮擦則顯示圓圈範圍
       const updateCursor = () => {
         const color = document.getElementById("color").value;
         if (color === "#ffffff") {
@@ -1008,10 +958,10 @@ public class CanvasChatServer {
         }
       };
 
-      // 建立並渲染彈幕元素，7秒後（配合 CSS 動畫時間）自動移除
-      const createDanmu = (text) => {
+      // 建立並渲染彈幕元素，7 秒後（配合 CSS 動畫時間）自動移除
+      const createFlyText = (text) => {
         const div = document.createElement("div");
-        div.className = "danmu";
+        div.className = "fly-text";
         div.innerText = text;
         div.style.top = Math.random() * (window.innerHeight - 150) + "px";
         div.style.color = `hsl(${Math.random() * 360}, 100%, 75%)`;
@@ -1037,7 +987,7 @@ public class CanvasChatServer {
 回顧 Servlet 的開發痛點，並認識 Spring MVC 框架如何運用「前端控制器」模式用更簡潔的方式解決這些問題。
 
 **🤔 為什麼需要它**
-走過前面幾個小節，你應該已經強烈感受到傳統 Web 開發的不便。我們來盤點一下純 Servlet 開發的兩大痛點：
+走過前面幾個小節，你應該已經感受到傳統 Web 開發的不便。我們來盤點一下純 Servlet 開發的兩大痛點：
 
 1. **類別膨脹與路由零散**
    對應每一個「請求端點」，往往需要建立一支專屬的 Servlet 類別。隨著功能增多，專案體積急速臃腫，管理會越來越困難。
@@ -1318,7 +1268,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 > | **`request`**     | 設定此除錯配置的行為模式。<br>● **`launch`**：代表由 VS Code 負責啟動並偵錯一個全新的程式。<br>● **`attach`**：代表將 VS Code 偵錯器附加到一個「已經在幕後執行中」的程式。                                                                                                                                                                                                                 |
 > | **`mainClass`**   | 標記了應用程式的啟動入口點。<br>在每個 Spring Boot 專案的 `src/main/java` 目錄深處，都會有一支帶有 `@SpringBootApplication` 標註的 Java 主類別，這支 Java 程式正是整台伺服器的啟動入口。                                                                                                                                                                                                   |
 > | **`projectName`** | 對應此應用程式所在的專案名稱。                                                                                                                                                                                                                                                                                                                                                             |
-> | **`args`**        | 可於伺服器啟動時傳遞的命令列參數。<br>實務上我們常會在這裡切換不同的啟動環境設定檔案，常見有兩種指定寫法：<br>1. **`--spring.profiles.active=dev`**：適用於**標準命名規則**。Spring 會自動尋找名為 `application-dev.properties` 的設定檔。<br>2. **`--spring.config.name=test`**：適用於**非標準命名規則**。若你的設定檔名稱沒有加上 `application-` 前綴，就必須使用此指令來明確指定檔名。 |
+> | **`args`**        | 可於伺服器啟動時傳遞的命令列參數。<br>實務上我們常會在這裡切換不同的啟動環境設定檔案，常見有兩種指定寫法：<br>1. **`--spring.profiles.active=dev`**<br>適用於**標準命名規則**。Spring 會自動尋找名為 `application-dev.properties` 的設定檔。<br>2. **`--spring.config.name=test`**<br>適用於**非標準命名規則**。若你的設定檔名稱沒有加上 `application-` 前綴，就必須使用此指令來明確指定檔名。 |
 
 只要有了正確的 `.vscode/launch.json` 設定，接下來我們只需要按下鍵盤的 `F5` 快速鍵或點擊面板上方的綠色啟動箭頭，就能進入順利啟動你的 Spring 專案！
 
