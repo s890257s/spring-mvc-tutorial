@@ -46,11 +46,11 @@ Spring Boot 預設建立的 Web 專案並未包含資料庫工具，也無從得
 
 1. **補足依賴**
    引用「Spring Data JPA」來操作資料庫，以及負責底層通訊的「MSSQL JDBC Driver」。
-2. **設定連線對象**：在 `application.properties` 配置連線字串與帳號密碼，供應用程式於啟動時尋找並配對。
+2. **設定連線對象**：在`application.properties`配置連線字串與帳號密碼，供應用程式於啟動時尋找並配對。
 
 **💻 實作範例：第一步、加入 Maven 依賴**
 
-請開啟專案根目錄底下的 `pom.xml`，在 `<dependencies>` 區塊內加入以下依賴，並重新載入 Maven：
+請開啟專案根目錄底下的`pom.xml`，在`<dependencies>`區塊內加入以下依賴，並重新載入 Maven：
 
 ```xml
         <!-- Spring Data JPA 依賴：提供強大的資料庫抽象操作層 -->
@@ -72,7 +72,7 @@ Spring Boot 預設建立的 Web 專案並未包含資料庫工具，也無從得
 >
 > <div align="center">
 >
-> ```mermaid
+>```mermaid
 > graph TD
 >     %%{init: { 'theme': 'forest' } }%%
 >     A[Spring Data JPA] -->|提供 Repository 介面<br>與高階 CRUD 封裝| B[Hibernate<br/>JPA 核心實作]
@@ -80,13 +80,13 @@ Spring Boot 預設建立的 Web 專案並未包含資料庫工具，也無從得
 >     C -->|呼叫特定廠商實作<br>以建立實際連線| D[MSSQL JDBC Driver<br/>微軟提供的資料庫驅動程式]
 >     D -->|透過微軟專屬 TDS 協定<br>傳輸資料| E[(Microsoft SQL Server<br/>實際的資料庫)]
 >     linkStyle default stroke:#ffffff,stroke-width:2px;
-> ```
+>```
 >
 > </div>
 
 **💻 實作範例：第二步、配置連線設定**
 
-請開啟專案目錄下的 `src/main/resources/application.properties`，並加入以下設定檔。本範例假設我們已經在本機建立好一個名為 `DemoDB` 資料庫為例：
+請開啟專案目錄下的`src/main/resources/application.properties`，並加入以下設定檔。本範例假設我們已經在本機建立好一個名為`DemoDB`資料庫為例：
 
 ```properties
 # 1. 指定連線的資料庫驅動與 URL
@@ -129,21 +129,21 @@ spring.sql.init.data-locations=classpath:data.sql
 連線建立成功後，接下來需建立資料庫的初始化 SQL 腳本，以及 Java 物件與資料庫之間的映射關係，也就是 ORM 映射。
 
 > ⚠️ **環境安全須知：嚴禁於正式環境啟用自動初始化**
-> 無論採用上述哪一種資料庫初始化機制，在**正式環境**或是**團隊共用測試伺服器**中，切記皆不可開啟自動建表或 SQL 執行腳本功能，務必確認為 `ddl-auto=none` 與 `init.mode=never`，否則極易導致線上資料被清空或意外覆寫！
-> 實務上，建議透過**多重設定檔分離**，例如將配置切分為開發專用的 `application-dev.properties` 與上線用的 `application-prod.properties`來達到最安全的防護。
+> 無論採用上述哪一種資料庫初始化機制，在**正式環境**或是**團隊共用測試伺服器**中，切記皆不可開啟自動建表或 SQL 執行腳本功能，務必確認為`ddl-auto=none`與`init.mode=never`，否則極易導致線上資料被清空或意外覆寫！
+> 實務上，建議透過**多重設定檔分離**，例如將配置切分為開發專用的`application-dev.properties`與上線用的`application-prod.properties`來達到最安全的防護。
 
 ### <a id="CH3-1-2"></a>[2. 資料庫初始化：使用 SQL 腳本建表與寫入測試資料](#toc)
 
 **📍 單元目標**  
-學會使用 `schema.sql` 與 `data.sql` 自動化建立資料表與初始資料。
+學會使用`schema.sql`與`data.sql`自動化建立資料表與初始資料。
 
 **🤔 為什麼需要它**  
-在專案開發過程中，除了可以依賴 JPA 的 `ddl-auto` 自動建表機制來建立資料表以外，我們也可以透過 Spring Boot 提供的 `spring.sql.init.mode` 配置搭配原生 SQL 腳本來進行資料庫的初始化。
+在專案開發過程中，除了可以依賴 JPA 的`ddl-auto`自動建表機制來建立資料表以外，我們也可以透過 Spring Boot 提供的`spring.sql.init.mode`配置搭配原生 SQL 腳本來進行資料庫的初始化。
 使用腳本能讓我們更精確地管控資料庫結構的異動，它能在每次專案啟動時自動為我們建好所需的表單並寫入測試資料，幫助我們快速建立一個穩定且可預測的開發環境。
 
 **💻 實作範例：第一步、建立表格腳本**
 
-請在 `src/main/resources/` 目錄下建立 `schema.sql` 檔案，內容如下：
+請在`src/main/resources/`目錄下建立`schema.sql`檔案，內容如下：
 
 ```sql
 DROP TABLE IF EXISTS [cart_item], [member], [product];
@@ -177,7 +177,7 @@ CREATE TABLE cart_item (
 
 **💻 實作範例：第二步、建立資料腳本**
 
-有了表格結構後，接下來我們準備一些測試用的假資料，讓系統一啟動就有東西可以操作。同樣在 `src/main/resources/` 目錄下建立 `data.sql` 檔案：
+有了表格結構後，接下來我們準備一些測試用的假資料，讓系統一啟動就有東西可以操作。同樣在`src/main/resources/`目錄下建立`data.sql`檔案：
 
 ```sql
 INSERT INTO [member] (
@@ -236,7 +236,7 @@ VALUES
 ### <a id="CH3-1-3"></a>[3. 建構操作模型：Entity 實體類別與 Repository 介面](#toc)
 
 **📍 單元目標**  
-學習定義 JPA `Entity` 實體，使其精確映射剛剛建立的 SQL 表格，並配置 `Repository` 介面以獲得資料操作能力。
+學習定義 JPA`Entity`實體，使其精確映射剛剛建立的 SQL 表格，並配置`Repository`介面以獲得資料操作能力。
 
 **🤔 為什麼需要它**  
 有了資料庫連線和初始化腳本，接下來的關鍵是如何讓 Java 程式碼「認識」資料表？我們需要建立 Entity 與 Repository 的映射關係，讓程式碼和資料庫之間搭起溝通的橋樑。
@@ -244,13 +244,13 @@ VALUES
 **📖 核心概念**
 
 1. **Entity**
-   開發人員定義好 Java 類別的屬性並打上 `@Entity` 標註，藉由精確指定 `@Table` 與 `@Column`，讓 JPA 知道如何對應資料表的每一個欄位。
+   開發人員定義好 Java 類別的屬性並打上`@Entity`標註，藉由精確指定`@Table`與`@Column`，讓 JPA 知道如何對應資料表的每一個欄位。
 2. **Repository**
-   雖然我們有表格實體，但還必須撰寫一個繼承 `JpaRepository` 的介面，讓我們能直接在程式中呼叫 `save()`, `findById()` 等基礎查詢語法。
+   雖然我們有表格實體，但還必須撰寫一個繼承`JpaRepository`的介面，讓我們能直接在程式中呼叫`save()`,`findById()`等基礎查詢語法。
 
 **💻 實作範例：第一步、建立 Entity 實體**
 
-以我們剛剛建立的 `product` 表格為例：
+以我們剛剛建立的`product`表格為例：
 
 ```java
 import jakarta.persistence.*;
@@ -276,7 +276,7 @@ public class Product {
 
 **💻 實作範例：第二步、建立 Repository 操作介面**
 
-只需要建立一個 Java `interface` 並繼承 `JpaRepository` 即可：
+只需要建立一個 Java`interface`並繼承`JpaRepository`即可：
 
 ```java
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -293,14 +293,14 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 ### <a id="CH3-1-4"></a>[4. 圖片資料預載：實作 ApplicationRunner 進行二進位檔案初始化](#toc)
 
 **📍 單元目標**  
-學習如何透過實作 `ApplicationRunner` 介面，在 Spring Boot 應用程式啟動完成時，自動讀取本地資源中的圖片，並將其轉換為 byte[] 存入資料庫中。
+學習如何透過實作`ApplicationRunner`介面，在 Spring Boot 應用程式啟動完成時，自動讀取本地資源中的圖片，並將其轉換為 byte[] 存入資料庫中。
 
 **🤔 為什麼需要它**  
-為了期末專案，除了文字資料外，系統通常還需要預先載入一些二進位檔案，像是預設的會員大頭貼或商品展示圖。SQL 腳本擅長處理純文字資料，但如果要匯入圖片等二進位檔案就力不從心了。因此我們需要一個機制，讓 Spring Boot 在啟動完畢後，自動執行一段 Java 程式來幫我們讀取圖片並寫入資料庫。這就是 `ApplicationRunner` 介面的用途。
+為了期末專案，除了文字資料外，系統通常還需要預先載入一些二進位檔案，像是預設的會員大頭貼或商品展示圖。SQL 腳本擅長處理純文字資料，但如果要匯入圖片等二進位檔案就力不從心了。因此我們需要一個機制，讓 Spring Boot 在啟動完畢後，自動執行一段 Java 程式來幫我們讀取圖片並寫入資料庫。這就是`ApplicationRunner`介面的用途。
 
 **💻 實作範例：建立自動初始化元件**
 
-請在你的專案中建立一個名為 `Initialize` 的類別，並參考以下程式碼：
+請在你的專案中建立一個名為`Initialize`的類別，並參考以下程式碼：
 
 ```java
 import lombok.RequiredArgsConstructor;
@@ -398,14 +398,14 @@ public class Initialize implements ApplicationRunner { // 實作 ApplicationRunn
 
 |  #  | 對應小節                         | 回顧問題                                                                           | 參考解答                                                                                                                                     |
 | :-: | :------------------------------- | :--------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- |
-|  1  | Maven 依賴與配置                 | 在 Spring Boot 專案中使用 SQL Server，必須在 `pom.xml` 中引入哪兩個關鍵依賴？     | `spring-boot-starter-data-jpa` 用於 ORM 操作，以及 `mssql-jdbc` 用於資料庫底層連線。                                                        |
-|  2  | application.properties 配置      | 如果要關閉 SSL 憑證加密驗證，應該如何處理？                                        | 在連線網址 `spring.datasource.url` 的末端字串附加 `;encrypt=false` 即可。                                                                    |
-|  3  | application.properties 配置      | `spring.jpa.hibernate.ddl-auto` 設為 `update` 與 `create` 的差異為何？正式環境該使用哪個值？ | `update` 保留現有資料僅同步結構變更；`create` 每次啟動會清除所有資料重建表格。正式環境應設為 `none` 防止資料被覆寫。 |
-|  4  | SQL 腳本初始化                   | `spring.sql.init.mode` 設為 `always` 時，Spring Boot 會在何時執行 SQL 腳本？腳本應放在哪個目錄下？ | 每次專案啟動時都會執行。SQL 腳本需放在 `src/main/resources/` 目錄下，並透過 `schema-locations` 和 `data-locations` 指定路徑。 |
-|  5  | Entity 實體類別                  | 在 JPA 中，一個合法的實體類別必定要具備哪兩個基本註解？                            | `@Entity` 宣告為資料表對映實體，以及 `@Id` 宣告主鍵。                                                                                        |
-|  6  | Entity 實體類別                  | `@Column` 註解在什麼情況下可以省略？                                               | 當 Java 屬性名稱符合 Spring 的「約定大於配置」命名規則時可省略。例如屬性 `productName` 會自動對應欄位 `product_name`。                        |
-|  7  | Repository 介面                  | `JpaRepository<Product, Integer>` 泛型傳入的兩個參數分別代表什麼意義？             | 第一個參數是它專門負責管理的 Entity 類別型態，第二個參數則是該 Entity 所宣告之 ID 主鍵的資料型態。                                            |
-|  8  | ApplicationRunner 初始化         | 為什麼不用 SQL 腳本來初始化圖片，而要另外實作 `ApplicationRunner`？                | SQL 腳本擅長處理純文字資料，無法方便地匯入圖片等二進位檔案。`ApplicationRunner` 能在專案啟動完成後，透過 Java 程式讀取圖檔並以 byte[] 寫入資料庫。 |
+|  1  | Maven 依賴與配置                 | 在 Spring Boot 專案中使用 SQL Server，必須在`pom.xml`中引入哪兩個關鍵依賴？     |`spring-boot-starter-data-jpa`用於 ORM 操作，以及`mssql-jdbc`用於資料庫底層連線。                                                        |
+|  2  | application.properties 配置      | 如果要關閉 SSL 憑證加密驗證，應該如何處理？                                        | 在連線網址`spring.datasource.url`的末端字串附加`;encrypt=false`即可。                                                                    |
+|  3  | application.properties 配置      |`spring.jpa.hibernate.ddl-auto`設為`update`與`create`的差異為何？正式環境該使用哪個值？ |`update`保留現有資料僅同步結構變更；`create`每次啟動會清除所有資料重建表格。正式環境應設為`none`防止資料被覆寫。 |
+|  4  | SQL 腳本初始化                   |`spring.sql.init.mode`設為`always`時，Spring Boot 會在何時執行 SQL 腳本？腳本應放在哪個目錄下？ | 每次專案啟動時都會執行。SQL 腳本需放在`src/main/resources/`目錄下，並透過`schema-locations`和`data-locations`指定路徑。 |
+|  5  | Entity 實體類別                  | 在 JPA 中，一個合法的實體類別必定要具備哪兩個基本註解？                            |`@Entity`宣告為資料表對映實體，以及`@Id`宣告主鍵。                                                                                        |
+|  6  | Entity 實體類別                  |`@Column`註解在什麼情況下可以省略？                                               | 當 Java 屬性名稱符合 Spring 的「約定大於配置」命名規則時可省略。例如屬性`productName`會自動對應欄位`product_name`。                        |
+|  7  | Repository 介面                  |`JpaRepository<Product, Integer>`泛型傳入的兩個參數分別代表什麼意義？             | 第一個參數是它專門負責管理的 Entity 類別型態，第二個參數則是該 Entity 所宣告之 ID 主鍵的資料型態。                                            |
+|  8  | ApplicationRunner 初始化         | 為什麼不用 SQL 腳本來初始化圖片，而要另外實作`ApplicationRunner`？                | SQL 腳本擅長處理純文字資料，無法方便地匯入圖片等二進位檔案。`ApplicationRunner`能在專案啟動完成後，透過 Java 程式讀取圖檔並以 byte[] 寫入資料庫。 |
 
 ---
 
@@ -414,17 +414,17 @@ public class Initialize implements ApplicationRunner { // 實作 ApplicationRunn
 ### <a id="CH3-2-1"></a>[1. 資料傳輸危機：Entity 的暴露風險與 DTO 防護機制](#toc)
 
 **📍 單元目標**  
-理解單靠 `Entity` 物件於前後端直傳的危險性，並學會運用 `DTO` 建立安全邊界。
+理解單靠`Entity`物件於前後端直傳的危險性，並學會運用`DTO`建立安全邊界。
 
 **🤔 為什麼不能直接傳遞 Entity？**  
-部分開發者為了圖方便，會將查詢出的 `@Entity` 實體直接拋給 Controller 甚至前端畫面，或直接拿 `@Entity` 來接收表單資料。
+部分開發者為了圖方便，會將查詢出的`@Entity`實體直接拋給 Controller 甚至前端畫面，或直接拿`@Entity`來接收表單資料。
 這是實務上**必須避免的 Anti-Pattern 反模式**，它會引發以下三大架構、安全危機：
 
 1. 潛在機密暴露：埋下 RESTful 轉型的地雷
-   在傳統 Spring MVC 中，只要畫面沒寫出 `${user.password}`，密碼確實就不會顯示。但現代系統多半會面臨**前後端分離的 RESTful API** 轉型。若習慣直接拋出 Entity，未來只要轉為 JSON 回應，底層的**密碼 Hash** 與**權限標記**將全數隨封包送出。只要按下 F12，機密即刻見光死。
+   在傳統 Spring MVC 中，只要畫面沒寫出`${user.password}`，密碼確實就不會顯示。但現代系統多半會面臨**前後端分離的 RESTful API** 轉型。若習慣直接拋出 Entity，未來只要轉為 JSON 回應，底層的**密碼 Hash** 與**權限標記**將全數隨封包送出。只要按下 F12，機密即刻見光死。
 
 2. 過度綁定：引發 Over-Posting 安全漏洞
-   若接收表單時直接以 `@Entity` 作為容器，惡意使用者只需在 HTTP 請求中偷偷夾帶 `is_admin=true` 或 `balance=9999` 等隱藏參數。後端一旦照單全收並存入資料庫，普通會員就能瞬間「升級為管理員」，輕易駭入系統。
+   若接收表單時直接以`@Entity`作為容器，惡意使用者只需在 HTTP 請求中偷偷夾帶`is_admin=true`或`balance=9999`等隱藏參數。後端一旦照單全收並存入資料庫，普通會員就能瞬間「升級為管理員」，輕易駭入系統。
 
 3. 職責混亂：視圖邏輯與資料層嚴重耦合
    畫面經常需要特定的資料格式，像是**將姓與名合併**或是**轉換日期格式**。若強迫共用 Entity 傳遞，會導致資料庫實體被迫去承擔與 UI 排版相關的屬性與設計，使得系統結構混亂不堪。
@@ -476,7 +476,7 @@ public class OrderDetailDto {
 > 💡 **知識補充：什麼是延遲載入例外 Lazy Loading Exception？**
 > JPA 為了節省效能，查詢資料時，預設不會把「關聯的表格內容」一併撈出。例如，我們查了一筆訂單，系統不會主動去抓這筆訂單的會員與商品細節，這個機制被稱為「延遲載入」。
 >
-> 如果我們偷懶把這個 Entity 直接丟給 Thymeleaf 渲染，當畫面寫到 `${order.member.name}` 試圖印出會員名字時，災難就會發生，因為程式執行到 Controller 或 View 層級時，後端管理資料庫連線的交易早就已經關閉；JPA 沒有連線可以用，自然無法回頭去補撈資料，就會當場拋出 `LazyInitializationException` 錯誤。
+> 如果我們偷懶把這個 Entity 直接丟給 Thymeleaf 渲染，當畫面寫到`${order.member.name}`試圖印出會員名字時，災難就會發生，因為程式執行到 Controller 或 View 層級時，後端管理資料庫連線的交易早就已經關閉；JPA 沒有連線可以用，自然無法回頭去補撈資料，就會當場拋出`LazyInitializationException`錯誤。
 >
 > **DTO 的完美救援**
 > 只要我們確實遵守規範，在 Service 層資料庫連線還暢通時，先把該讀的資料都拿出來、再放進 DTO 裡面。這麼一來，DTO 傳送給 View 時，它就成了一個乾淨單純的資料載體，不會再去觸發任何資料庫查詢，徹底避免了這個經典錯誤！
@@ -536,7 +536,7 @@ public UserDTO convertToDtoSafe(User entity) {
 
 #### <a id="CH3-2-2-2"></a>[選項二：封裝進 DTO 內部轉換 (高耦合，小專案限定)](#toc)
 
-為了解決 Service 層變得冗長的問題，有些開發者會選擇將轉換邏輯「寫進 DTO 裡面」，例如透過 DTO 的建構子直接接收一個 Entity，或者設計例如 `UserDTO.fromEntity(User)` 的工廠方法。
+為了解決 Service 層變得冗長的問題，有些開發者會選擇將轉換邏輯「寫進 DTO 裡面」，例如透過 DTO 的建構子直接接收一個 Entity，或者設計例如`UserDTO.fromEntity(User)`的工廠方法。
 
 ```java
 public class UserDTO {
@@ -553,12 +553,12 @@ public class UserDTO {
 }
 ```
 
-- **優點**：呼叫端的程式碼會變得非常簡潔，只需要 `new UserDTO(user)` 即可。
+- **優點**：呼叫端的程式碼會變得非常簡潔，只需要`new UserDTO(user)`即可。
 - **缺點（致命傷）**：產生了**高耦合**。DTO 理應是純淨的跨層傳輸資料載體，一旦它「認識」了 Entity，就等於它同時承擔了「資料載體」與「資料轉換」兩個職責。實務上我們**不建議**這麼做，除非這只是非常微型的小專案。
 
 #### <a id="CH3-2-2-3"></a>[選項三：抽離為獨立的 MapperUtil](#toc)
 
-為兼顧解耦合與 Service 乾淨，比較進階的手法是建立一個專門負責轉換的工具類（例如 `UserMapperUtil`）。
+為兼顧解耦合與 Service 乾淨，比較進階的手法是建立一個專門負責轉換的工具類（例如`UserMapperUtil`）。
 
 ```java
 public class UserMapperUtil {
@@ -574,11 +574,11 @@ public class UserMapperUtil {
 }
 ```
 
-在這之後，Service 只要調用 `UserMapperUtil.toDTO(user)` 即可。它完美做到了職責分離與乾淨架構，是手動 Mapping 中最推薦的結構做法。
+在這之後，Service 只要調用`UserMapperUtil.toDTO(user)`即可。它完美做到了職責分離與乾淨架構，是手動 Mapping 中最推薦的結構做法。
 
 #### <a id="CH3-2-2-4"></a>[選項四：使用 Spring BeanUtils 動態複製](#toc)
 
-就算抽離為 MapperUtil，依然要手寫那幾十行的 `set()` 與 `get()`。於是，開發者將目光投向了自動化工具。Spring 原生內建了 `BeanUtils`，能透過 Java 的 反射 Reflection 機制，在執行時動態比對並將兩個物件中「名稱一樣的屬性」複製過去。
+就算抽離為 MapperUtil，依然要手寫那幾十行的`set()`與`get()`。於是，開發者將目光投向了自動化工具。Spring 原生內建了`BeanUtils`，能透過 Java 的 反射 Reflection 機制，在執行時動態比對並將兩個物件中「名稱一樣的屬性」複製過去。
 
 ```java
 import org.springframework.beans.BeanUtils;
@@ -595,7 +595,7 @@ public UserDTO convertWithBeanUtils(User entity) {
 - **優點**：程式碼簡潔，不用自己手寫一堆 set、get。
 - **缺點**：
   1. **效能隱患**：Reflection 機制在底層運作成本較高，若是處理大量資料的列表轉換，會顯著拖慢系統速度。
-  2. **型別盲點**：若 Entity 的 id 是 `Integer`，但 DTO 卻打錯寫成 `String`，`BeanUtils` 因為缺乏編譯檢查，在 Runtime 時也會默默忽略，很容易產生難以查找的 Bug。
+  2. **型別盲點**：若 Entity 的 id 是`Integer`，但 DTO 卻打錯寫成`String`，`BeanUtils`因為缺乏編譯檢查，在 Runtime 時也會默默忽略，很容易產生難以查找的 Bug。
 
 #### <a id="CH3-2-2-5"></a>[選項五：業界主流自動生成工具 MapStruct](#toc)
 
@@ -604,7 +604,7 @@ public UserDTO convertWithBeanUtils(User entity) {
 
 **1. 引入必要依賴 (pom.xml)**
 
-要使用 MapStruct，我們需要在專案的 `pom.xml` 中加入它本身的核心函式庫，以及負責在編譯期產生程式碼的 Processor（記得要跟 Lombok 搭配配置）：
+要使用 MapStruct，我們需要在專案的`pom.xml`中加入它本身的核心函式庫，以及負責在編譯期產生程式碼的 Processor（記得要跟 Lombok 搭配配置）：
 
 ```xml
 <dependencies>
@@ -643,7 +643,7 @@ public UserDTO convertWithBeanUtils(User entity) {
 
 **2. 宣告 Mapper 介面**
 
-你只需要定義一個 `interface` 介面，不需要寫任何實作方法：
+你只需要定義一個`interface`介面，不需要寫任何實作方法：
 
 ```java
 import org.mapstruct.Mapper;
@@ -658,7 +658,7 @@ public interface UserMapper {
 
 **3. 基本用法：在 Service 中調用**
 
-由於我們宣告了 `componentModel = "spring"`，現在可以像使用 Repository 一樣，直接在 Service 中依賴注入這個 Mapper 並呼叫它：
+由於我們宣告了`componentModel = "spring"`，現在可以像使用 Repository 一樣，直接在 Service 中依賴注入這個 Mapper 並呼叫它：
 
 ```java
 import org.springframework.stereotype.Service;
@@ -684,7 +684,7 @@ public class UserService {
 
 **4. 進階實戰用法：@Mapping 與集合轉換**
 
-除了屬性名稱完全一樣會自動對應外，實務上常遇到名稱不同、需要過濾或是要轉換整個 `List` 清單的情境，MapStruct 都能加個簡單標記就搞定：
+除了屬性名稱完全一樣會自動對應外，實務上常遇到名稱不同、需要過濾或是要轉換整個`List`清單的情境，MapStruct 都能加個簡單標記就搞定：
 
 ```java
 import org.mapstruct.Mapper;
@@ -710,13 +710,13 @@ public interface UserMapper {
 }
 ```
 
-這就是編譯生成技術強大的地方！透過這幾個直觀的 `@Mapping` 宣告，MapStruct 就會在幕後生成效能極好、且自帶 `null` 安全檢查以及迴圈迭代的純 Java `get/set` 原始程式碼。
+這就是編譯生成技術強大的地方！透過這幾個直觀的`@Mapping`宣告，MapStruct 就會在幕後生成效能極好、且自帶`null`安全檢查以及迴圈迭代的純 Java`get/set`原始程式碼。
 
 > 💡 **知識補充：MapStruct 為何效能頂尖？**
-> 很多人會疑惑，這不就跟 BeanUtils 類似嗎？並非如此。它**不會**在系統「執行期間 Runtime」去慢慢比對 Reflection，而是在 Java 程式碼「編譯期間 Compile Time」的階段，自動幫你讀懂這個 Interface 接口，然後在幕後建立 `.class` 檔，「偷偷幫你寫出選項三的 `MapperUtil`」的手動 Mapping 程式碼。
+> 很多人會疑惑，這不就跟 BeanUtils 類似嗎？並非如此。它**不會**在系統「執行期間 Runtime」去慢慢比對 Reflection，而是在 Java 程式碼「編譯期間 Compile Time」的階段，自動幫你讀懂這個 Interface 接口，然後在幕後建立`.class`檔，「偷偷幫你寫出選項三的`MapperUtil`」的手動 Mapping 程式碼。
 
-- **優點**：兼具了 `BeanUtils` 的「免手寫便利」以及選項一的「高效能」與「型別安全機制」。能大幅度消弭瑣碎的轉換程式碼實作，是往後深入企業級系統與微服務架構時，非常關鍵的技能！
-- **缺點**：當然就是要多學一個技術棧，並且要注意 `pom.xml` 中它與 Lombok 載入順序的配置，會增加些許認知負擔。但隨著專案經驗的累積，這點額外學習成本很快就會被它帶來的效率提升抵消掉。
+- **優點**：兼具了`BeanUtils`的「免手寫便利」以及選項一的「高效能」與「型別安全機制」。能大幅度消弭瑣碎的轉換程式碼實作，是往後深入企業級系統與微服務架構時，非常關鍵的技能！
+- **缺點**：當然就是要多學一個技術棧，並且要注意`pom.xml`中它與 Lombok 載入順序的配置，會增加些許認知負擔。但隨著專案經驗的累積，這點額外學習成本很快就會被它帶來的效率提升抵消掉。
 
 ### 🔁 3-2 章節回顧
 
@@ -724,10 +724,10 @@ public interface UserMapper {
 | :-: | :------------------------- | :-------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |  1  | Entity 的暴露風險與 DTO    | 直接使用 Entity 作為資料載體，可能會引發哪兩大安全風險？                                                       | **機密暴露風險**：將 Entity 直接輸出給前端時，可能將密碼 Hash、內部權限註記等機密資料一併隨封包外洩。<br>**Over-Posting 漏洞**：惡意竄改的隱藏表單參數可能被 Controller 照單全收並直接更新進資料庫。                                                                                                                     |
 |  2  | Entity 的暴露風險與 DTO    | Entity 直接暴露的第三項風險「職責混亂」指的是什麼？                                                           | 前端畫面常需要特定格式的資料，如姓名合併或日期格式化。若強迫共用 Entity 傳遞，會迫使資料庫實體去承擔 UI 排版相關的屬性設計，導致資料層與視圖層嚴重耦合。 |
-|  3  | Entity 的暴露風險與 DTO    | 把 Entity 拋回給前端畫面渲染時，為何會觸發 `LazyInitializationException`？該如何解決？                     | JPA 預設不會主動抓取關聯表格細節。當畫面試圖讀取關聯欄位時，資料庫連線早已被 Service 關閉。正確做法是在 Service 層連線活躍時，提早將必要的關聯資料調用出來，封裝進 DTO 再交給畫面。                                                                                    |
+|  3  | Entity 的暴露風險與 DTO    | 把 Entity 拋回給前端畫面渲染時，為何會觸發`LazyInitializationException`？該如何解決？                     | JPA 預設不會主動抓取關聯表格細節。當畫面試圖讀取關聯欄位時，資料庫連線早已被 Service 關閉。正確做法是在 Service 層連線活躍時，提早將必要的關聯資料調用出來，封裝進 DTO 再交給畫面。                                                                                    |
 |  4  | Entity 的暴露風險與 DTO    | 資料在何時必須從 Entity 轉換為 DTO？                                                                          | 當資料離開 Service 層時。所有由 Service 往外輸出給 Controller 的物件，都必須是專為當下需求量身打造的 DTO，確保安全隔離。 |
 |  5  | 轉換實作技巧               | 將轉換邏輯直接寫在 DTO 的建構子中有什麼壞處？                                                                 | 會導致過度耦合。DTO 應為無狀態的單純跨層傳輸載體，必須避免與資料庫專用的 Entity 實體產生依賴綁定，否則會徹底破壞分層隔離的初衷。                                                                                                                     |
-|  6  | 轉換實作技巧               | 為什麼實務企業專案傾向使用 MapStruct 而非 Spring 內建的 `BeanUtils`？                                   | `BeanUtils` 基於 Reflection 運作，大量列表資料時效能差且無法在編譯期檢查型別不一致。MapStruct 在編譯階段直接產生最高效的「手刻映射原生碼」，完美兼具極致效能與強型別防護。 |
+|  6  | 轉換實作技巧               | 為什麼實務企業專案傾向使用 MapStruct 而非 Spring 內建的`BeanUtils`？                                   |`BeanUtils`基於 Reflection 運作，大量列表資料時效能差且無法在編譯期檢查型別不一致。MapStruct 在編譯階段直接產生最高效的「手刻映射原生碼」，完美兼具極致效能與強型別防護。 |
 
 ---
 
@@ -744,9 +744,9 @@ public interface UserMapper {
 MVC 是一種軟體架構模式，主要用於區分「使用者介面」與「底層資料操作」。在現代的 Spring MVC 框架中，它們的職責如下：
 
 1. **Model 模型**
-   負責攜帶資料的載體。在我們先前的章節中，`DTO`、`Entity` 或是傳遞資料用的 `Model` 容器物件都屬於資料模型的範疇。
+   負責攜帶資料的載體。在我們先前的章節中，`DTO`、`Entity`或是傳遞資料用的`Model`容器物件都屬於資料模型的範疇。
 2. **View 視圖**
-   負責呈現資料的使用者介面。通常是前端的 `HTML` 頁面或 `Thymeleaf` 樣板，它只負責「印出結果」，不包含任何商業邏輯。
+   負責呈現資料的使用者介面。通常是前端的`HTML`頁面或`Thymeleaf`樣板，它只負責「印出結果」，不包含任何商業邏輯。
 3. **Controller 控制器**
    負責接收使用者的網路請求，驗證參數後決定要呼叫哪個 Model，最後將結果交給對應的 View 來渲染。
 
@@ -772,9 +772,9 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 
 | 階層結構           | 對應元件      | 核心職責                                                                     | 注意事項                                                                                 |
 | :----------------- | :------------ | :--------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
-| **Web 表現層**     | `@Controller` | （對應 MVC 模式）針對請求表單做驗證與轉發，收集並組裝視圖需要的 DTO 或模型。 | 避免在 Controller 撰寫商業邏輯，或直接撰寫存取資料庫的程式碼。                           |
-| **Service 業務層** | `@Service`    | 處理核心業務邏輯判斷，並掌控資料庫交易 `@Transactional`。                    | 避免將 HTTP 專屬的物件如 `HttpServletRequest` 或 `Session`，跨層穿透至此，導致嚴重耦合。 |
-| **Data 資料層**    | `@Repository` | 負責封裝對關聯式資料庫的 CRUD，如 JPA `JpaRepository`。                      | 避免在此實作複雜的業務或條件審查，這層只能有單純的資料庫操作指令。                       |
+| **Web 表現層**     |`@Controller`| （對應 MVC 模式）針對請求表單做驗證與轉發，收集並組裝視圖需要的 DTO 或模型。 | 避免在 Controller 撰寫商業邏輯，或直接撰寫存取資料庫的程式碼。                           |
+| **Service 業務層** |`@Service`   | 處理核心業務邏輯判斷，並掌控資料庫交易`@Transactional`。                    | 避免將 HTTP 專屬的物件如`HttpServletRequest`或`Session`，跨層穿透至此，導致嚴重耦合。 |
+| **Data 資料層**    |`@Repository`| 負責封裝對關聯式資料庫的 CRUD，如 JPA`JpaRepository`。                      | 避免在此實作複雜的業務或條件審查，這層只能有單純的資料庫操作指令。                       |
 
 <div style="display: flex; gap: 80px; margin: 10px 0 10px 0;
 border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
@@ -788,7 +788,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 >
 > 在實務開發中，我們通常不會將所有程式碼放在同一個路徑下，而是透過套件（Package）來將不同職責的程式碼分門別類。以下是業界常見的分層分類法，**這並非絕對的標準或規定，而是團隊開發時為了保持架構清晰的常見約定：**
 >
-> ```text
+>```text
 > tw.com.eeit.demo/       # 頂層 Package，通常為網域反寫加上專案名稱
 > ├── model/              # 存放資料載體相關物件
 > │   ├── dto/request/    # 負責接收前端傳入，封裝請求參數的 DTO
@@ -804,13 +804,13 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 > │   └── init/           # 存放應用程式啟動時即觸發的初始化元件與腳本
 > ├── controller/         # 負責接收 HTTP 請求與路由轉發的表現層
 > └── exception/          # 存放專案自定義的例外錯誤與全域例外攔截處理器
-> ```
+>```
 >
 > 📂 **專案結構較大時：功能驅動分類**
 >
 > 上方的「依職責分層 Package by Layer」適合中小型專案。當專案結構極大、擁有很多獨立功能模組時，團隊可以考慮改採**依功能分類 Package by Feature**，讓每個模組的關聯程式碼集中一處，方便獨立維護甚至拆分微服務：
 >
-> ```text
+>```text
 > (依功能分類範例)
 > ├── order/              # 以訂單模組為例，將相關元件集中一塊
 > │   ├── OrderController.java
@@ -819,7 +819,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 > │   └── dto/            # 存放訂單專屬的傳輸物件
 > └── common/             # 跨模組的共用邏輯或元件
 >     └── config/         # 全域或共用的設定檔
-> ```
+>```
 
 ### 🔁 3-3 章節回顧
 
@@ -827,8 +827,8 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 | :-: | :------------------------ | :----------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |  1  | MVC 架構                  | MVC 中的 Model、View、Controller 各自的職責為何？                        | Model 負責攜帶資料，View 負責呈現畫面，Controller 負責接收請求並協調兩者。                                                                                                                                                          |
 |  2  | 三層架構                  | 為什麼光靠 MVC 不夠，還需要三層架構？                                   | 因為 MVC 只涵蓋了 Web 表現層。若 Controller 兼顧商業運算與資料庫存取，會膨脹成「上帝類別 God Class」而難以維護。三層架構將系統解耦為表現層、業務層與資料層，讓各層專責。                                            |
-|  3  | 三層架構                  | `@Service` 層最核心的禁忌是什麼？                                          | 避免將 HTTP 專屬的物件如 `HttpServletRequest` 或 `Session` 跨層穿透至 Service 層，否則會導致業務層與 Web 層嚴重耦合，影響重用性與可測試性。                                                                                  |
-|  4  | 三層架構                  | 在三層架構中，`@Controller` 層應避免做哪些事？                             | 避免在 Controller 中撰寫商業邏輯運算，或直接撰寫存取資料庫的程式碼。Controller 只負責接收請求、驗證參數，以及將結果轉發給對應的 View。                                                                             |
+|  3  | 三層架構                  |`@Service`層最核心的禁忌是什麼？                                          | 避免將 HTTP 專屬的物件如`HttpServletRequest`或`Session`跨層穿透至 Service 層，否則會導致業務層與 Web 層嚴重耦合，影響重用性與可測試性。                                                                                  |
+|  4  | 三層架構                  | 在三層架構中，`@Controller`層應避免做哪些事？                             | 避免在 Controller 中撰寫商業邏輯運算，或直接撰寫存取資料庫的程式碼。Controller 只負責接收請求、驗證參數，以及將結果轉發給對應的 View。                                                                             |
 
 ---
 
@@ -837,7 +837,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 ### <a id="CH3-4-1"></a>[1. 表單 enctype 設定與 MultipartFile 介面操作](#toc)
 
 **📍 單元目標**  
-學會如何透過前端表單傳送二進位檔案，並在 Spring Controller 中使用 `MultipartFile` 介面接收檔案。
+學會如何透過前端表單傳送二進位檔案，並在 Spring Controller 中使用`MultipartFile`介面接收檔案。
 
 **🤔 為什麼需要它**  
 現代應用程式通常需要讓使用者上傳個人頭像、商品圖片或各式文件夾檔。傳統表單只能傳遞純文字，無法應付圖片等二進位資料。我們必須修改表單編碼格式，並透過 Spring 提供的專屬介面來接收這些二進位包裹。
@@ -850,13 +850,13 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 | **`MultipartFile`**                 | Spring 提供的核心介面，負責在 Controller 封裝並接收前端傳送過來的檔案實體。             |
 
 > 💡 **知識補充**
-> 客戶端提交檔案時，檔案是以二進位串流方式傳輸。`MultipartFile` 介面將這個過程高度抽象化，讓我們能輕鬆呼叫 `.getOriginalFilename()` 取得檔名，或是 `.getSize()` 取得檔案容量。
+> 客戶端提交檔案時，檔案是以二進位串流方式傳輸。`MultipartFile`介面將這個過程高度抽象化，讓我們能輕鬆呼叫`.getOriginalFilename()`取得檔名，或是`.getSize()`取得檔案容量。
 
-> 💡 **深度解析：為什麼必須使用 `multipart/form-data`？**
+> 💡 **深度解析：為什麼必須使用`multipart/form-data`？**
 >
-> HTML 表單預設的編碼格式是 `application/x-www-form-urlencoded`。在這種格式下，瀏覽器會把所有欄位轉換成類似 `name=John&age=25` 的「純文字鍵值對」。因此，如果在預設格式下上傳圖片，**伺服器就只會收到圖片的檔名字串，完全無法取得實際的二進位圖檔內容！**
+> HTML 表單預設的編碼格式是`application/x-www-form-urlencoded`。在這種格式下，瀏覽器會把所有欄位轉換成類似`name=John&age=25`的「純文字鍵值對」。因此，如果在預設格式下上傳圖片，**伺服器就只會收到圖片的檔名字串，完全無法取得實際的二進位圖檔內容！**
 >
-> 而 `multipart/form-data` 顧名思義，就是能將表單請求分割成多個獨立區塊 Multi-part。它會在 HTTP 傳輸包中動態帶入一組邊界符號 Boundary，將一般欄位的純文字，與圖片所屬的二進位內容徹底隔開。有了這個編碼機制，單一網路請求才能同時、安全地攜帶不同性質的傳輸資料。
+> 而`multipart/form-data`顧名思義，就是能將表單請求分割成多個獨立區塊 Multi-part。它會在 HTTP 傳輸包中動態帶入一組邊界符號 Boundary，將一般欄位的純文字，與圖片所屬的二進位內容徹底隔開。有了這個編碼機制，單一網路請求才能同時、安全地攜帶不同性質的傳輸資料。
 
 **💻 實作範例**
 
@@ -898,19 +898,19 @@ public class FileUploadController {
 ```
 
 > ⚠️ **常見地雷**  
-> 忘記在 `<form>` 標籤中加上 `enctype="multipart/form-data"`。如果遺漏這個屬性，表單會使用預設的純文字編碼，此時後端的 `MultipartFile` 將會接收到 `null` 或拋出錯誤。
+> 忘記在`<form>`標籤中加上`enctype="multipart/form-data"`。如果遺漏這個屬性，表單會使用預設的純文字編碼，此時後端的`MultipartFile`將會接收到`null`或拋出錯誤。
 
 ### <a id="CH3-4-2"></a>[2. 實作：將圖片轉為 byte[] 存入資料庫](#toc)
 
 **📍 單元目標**  
-學習如何將 `MultipartFile` 轉換為二進位陣列，並直接儲存進資料庫的欄位中。
+學習如何將`MultipartFile`轉換為二進位陣列，並直接儲存進資料庫的欄位中。
 
 **🤔 為什麼需要它**  
 在**期末專題**中，直接將圖片轉為 byte 陣列存入資料庫是最簡單且快速的解決方案，能大幅減輕檔案路徑管理的負擔。然而請注意，**實務上的企業專案通常不會將圖片存放在關聯式資料庫中**。基於資料庫的連線效能與高昂的儲存成本考量，實務上大多會交由專屬的檔案伺服器或雲端儲存空間（如 AWS S3）來集中管理。
 
 **💻 實作範例：上傳與儲存**
 
-在 3-1 專案建置時，我們已在資料庫將圖片欄位定義為 `VARBINARY(MAX)`，在 Java 的 Entity 中對應的型別即為 `byte[]`。為了確保程式碼的可維護性，我們必須遵守 **3-3** 介紹的三層架構規範，將圖片儲存的邏輯封裝至 `Service` 層，並由 `Controller` 來接收前端的檔案並進行路由轉發。
+在 3-1 專案建置時，我們已在資料庫將圖片欄位定義為`VARBINARY(MAX)`，在 Java 的 Entity 中對應的型別即為`byte[]`。為了確保程式碼的可維護性，我們必須遵守 **3-3** 介紹的三層架構規範，將圖片儲存的邏輯封裝至`Service`層，並由`Controller`來接收前端的檔案並進行路由轉發。
 
 ```java
 // 1. Service 層：負責資料庫互動與業務邏輯
@@ -960,7 +960,7 @@ public class MemberController {
 
 **💻 實作範例：提供圖片存取端點**
 
-將圖片存進資料庫後，我們需要開設一個專屬的 API，讓前端的 `<img src="...">` 能夠請求這段二進位內容。同樣遵循三層架構規範，我們在 `Service` 先新增查詢邏輯：
+將圖片存進資料庫後，我們需要開設一個專屬的 API，讓前端的`<img src="...">`能夠請求這段二進位內容。同樣遵循三層架構規範，我們在`Service`先新增查詢邏輯：
 
 ```java
     // 在 MemberService 中新增查詢方法
@@ -972,7 +972,7 @@ public class MemberController {
     }
 ```
 
-接著在 `Controller` 新增端點，呼叫 `Service` 取得圖片陣列，並透過 `ResponseEntity` 回傳。這個機制在第二章靜態資源時有簡單提及過：
+接著在`Controller`新增端點，呼叫`Service`取得圖片陣列，並透過`ResponseEntity`回傳。這個機制在第二章靜態資源時有簡單提及過：
 
 ```java
 import org.springframework.web.bind.annotation.GetMapping;
@@ -1002,7 +1002,7 @@ public class MemberPhotoController {
 ```
 
 > 💡 **知識補充：防範破圖狀態**
-> 若會員未曾上傳照片，`member.getMemberPhoto()` 將為 `null`，直接回傳給前端會導致 `<img>` 破圖。實務上我們可提早判斷 `if (photoBytes == null)`，並利用 `ClassPathResource` 讀取一張專案內建預設圖片（如 `default-avatar.webp`）轉為 byte[] 返還。
+> 若會員未曾上傳照片，`member.getMemberPhoto()`將為`null`，直接回傳給前端會導致`<img>`破圖。實務上我們可提早判斷`if (photoBytes == null)`，並利用`ClassPathResource`讀取一張專案內建預設圖片（如`default-avatar.webp`）轉為 byte[] 返還。
 
 如此一來，前端只要給定這個 API 網址，瀏覽器就會自動將收到的資料庫 byte 陣列渲染成圖片！
 
@@ -1017,11 +1017,11 @@ public class MemberPhotoController {
 
 **📖 核心概念**
 
-除了存入資料庫，針對較大的圖片或影片檔案，通常會採用另一種做法：**寫入伺服器的實體硬碟資料夾（例如 `C:/uploads`）**。
+除了存入資料庫，針對較大的圖片或影片檔案，通常會採用另一種做法：**寫入伺服器的實體硬碟資料夾（例如`C:/uploads`）**。
 這種做法的好處是不會占用資料庫的昂貴儲存空間與連線效能。
 
 **實作簡介一：寫入實體硬碟**  
-透過 `UUID` 自動產生一組隨機不重複的字串作為新檔名，並搭配 Java 原生 `Files.copy` 進行寫入動作：
+透過`UUID`自動產生一組隨機不重複的字串作為新檔名，並搭配 Java 原生`Files.copy`進行寫入動作：
 
 ```java
 Path storageLocation = Paths.get("C:/uploads");
@@ -1034,7 +1034,7 @@ Files.copy(file.getInputStream(), storageLocation.resolve(targetName), StandardC
 ```
 
 **實作簡介二：靜態資源映射**  
-基於安全性考量，Spring MVC 預設只允許外界讀取 `src/main/resources/static` 內的資源。若我們將圖片存放在專案外的工作目錄 `C:/uploads`，必須實作 `WebMvcConfigurer` 建立「虛擬路由映射」來搭起安全的橋樑：
+基於安全性考量，Spring MVC 預設只允許外界讀取`src/main/resources/static`內的資源。若我們將圖片存放在專案外的工作目錄`C:/uploads`，必須實作`WebMvcConfigurer`建立「虛擬路由映射」來搭起安全的橋樑：
 
 ```java
 @Configuration
@@ -1054,11 +1054,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
 |  #  | 對應小節                     | 回顧問題                                                                                                 | 參考解答                                                                                                                                                                                           |
 | :-: | :--------------------------- | :------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  1  | enctype 與 MultipartFile     | 若要讓表單同時支援傳送文字與二進位圖片檔案，必須在 `<form>` 標籤加上什麼屬性？               | 必須加上 `enctype="multipart/form-data"`，否則後端無法順利接收 `MultipartFile` 導致拋出錯誤。                                                                                                                 |
-|  2  | byte[] 存入資料庫              | 針對中小型專案，為什麼會選擇將圖片轉為 `byte[]` 存入資料庫，而不是存在伺服器實體硬碟？             | 因為實作簡單一致。且日後伺服器橫向擴展或容器化遷移時，能避免圖檔因為散落在不同伺服器的硬碟而導致資料遺失或讀取異常。                                                                                  |
-|  3  | byte[] 存入資料庫              | 圖片存入資料庫後，前端 `<img>` 標籤要如何取得並渲染這張圖片？                                    | 後端需開設一個專屬的 API 端點，在 Controller 透過 `ResponseEntity<byte[]>` 回傳圖片的二進位內容，並標示 `Content-Type` 為圖片類型。前端 `<img>` 的 `src` 屬性指向該 API 路徑即可自動渲染。 |
-|  4  | 存入伺服器實體硬碟            | 將檔案存入實體硬碟時，為什麼絕對不能直接使用 `file.getOriginalFilename()` 的檔名？            | 為了避免同名檔案互相覆寫，更要防範「惡意路徑穿越攻擊 Directory Traversal Attack」造成資安破口。通常會搭配 UUID 重新產生隨機且唯一的檔名。 |
-|  5  | 存入伺服器實體硬碟            | 若將檔案存放在專案外部的目錄，為何瀏覽器預設無法直接存取？該如何解決？                        | Spring MVC 預設只允許讀取 `src/main/resources/static` 內的資源。必須實作 `WebMvcConfigurer` 的 `addResourceHandlers` 方法，建立虛擬路由映射，將外部目錄橋接為可存取的靜態資源路徑。 |
+|  1  | enctype 與 MultipartFile     | 若要讓表單同時支援傳送文字與二進位圖片檔案，必須在`<form>`標籤加上什麼屬性？               | 必須加上`enctype="multipart/form-data"`，否則後端無法順利接收`MultipartFile`導致拋出錯誤。                                                                                                                 |
+|  2  | byte[] 存入資料庫              | 針對中小型專案，為什麼會選擇將圖片轉為`byte[]`存入資料庫，而不是存在伺服器實體硬碟？             | 因為實作簡單一致。且日後伺服器橫向擴展或容器化遷移時，能避免圖檔因為散落在不同伺服器的硬碟而導致資料遺失或讀取異常。                                                                                  |
+|  3  | byte[] 存入資料庫              | 圖片存入資料庫後，前端`<img>`標籤要如何取得並渲染這張圖片？                                    | 後端需開設一個專屬的 API 端點，在 Controller 透過`ResponseEntity<byte[]>`回傳圖片的二進位內容，並標示`Content-Type`為圖片類型。前端`<img>`的`src`屬性指向該 API 路徑即可自動渲染。 |
+|  4  | 存入伺服器實體硬碟            | 將檔案存入實體硬碟時，為什麼絕對不能直接使用`file.getOriginalFilename()`的檔名？            | 為了避免同名檔案互相覆寫，更要防範「惡意路徑穿越攻擊 Directory Traversal Attack」造成資安破口。通常會搭配 UUID 重新產生隨機且唯一的檔名。 |
+|  5  | 存入伺服器實體硬碟            | 若將檔案存放在專案外部的目錄，為何瀏覽器預設無法直接存取？該如何解決？                        | Spring MVC 預設只允許讀取`src/main/resources/static`內的資源。必須實作`WebMvcConfigurer`的`addResourceHandlers`方法，建立虛擬路由映射，將外部目錄橋接為可存取的靜態資源路徑。 |
 
 ---
 
@@ -1091,11 +1091,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
 任何具有個資防護的系統都需要身分驗證。透過權限分級，我們可以保護敏感功能（如刪除使用者）不被一般使用者存取。
 
 **📖 核心概念**  
-登入成功後，將封裝好的使用者資訊 (DTO) 存入 `HttpSession`，往後每次前端請求時，後端都能從 Session 中取出該物件來辨識使用者身分與權限。
+登入成功後，將封裝好的使用者資訊 (DTO) 存入`HttpSession`，往後每次前端請求時，後端都能從 Session 中取出該物件來辨識使用者身分與權限。
 
 **💻 實作範例：實作登入驗證邏輯**
 
-首先在 `Service` 實作登入驗證邏輯：
+首先在`Service`實作登入驗證邏輯：
 
 ```java
 @Service
@@ -1122,7 +1122,7 @@ public class MemberService {
 }
 ```
 
-接著在 `Controller` 接收表單並操作 Session：
+接著在`Controller`接收表單並操作 Session：
 
 ```java
 @Controller
@@ -1159,7 +1159,7 @@ public class LoginController {
 後台管理系統需要提供介面讓管理員維護資料庫內容，但必須嚴格控管操作權限，以防越權修改。
 
 **📖 核心概念**  
-前端 Thymeleaf 使用 `th:if` 根據 Session 狀態決定是否顯示按鈕；後端 Controller 則必須在處理修改與刪除請求時，再次驗證 Session 中的權限標記，達到前後端雙重防護。
+前端 Thymeleaf 使用`th:if`根據 Session 狀態決定是否顯示按鈕；後端 Controller 則必須在處理修改與刪除請求時，再次驗證 Session 中的權限標記，達到前後端雙重防護。
 
 **💻 實作範例：Controller 權限控管與對接**
 
@@ -1206,11 +1206,11 @@ public class MemberController {
 ```
 
 > **前後端雙重防護原則**
-> 前端 Thymeleaf 利用 `th:if="${session.loginUser.isAdmin}"` 隱藏 CRUD 按鈕只是為了「使用者體驗 UX」，惡意使用者依然可以透過 Postman 直接打你的後端 API。因此在 `Controller` 操作資料前，**務必再次檢查 Session 內的權限標記**，不要單純只依賴畫面的防護！
+> 前端 Thymeleaf 利用`th:if="${session.loginUser.isAdmin}"`隱藏 CRUD 按鈕只是為了「使用者體驗 UX」，惡意使用者依然可以透過 Postman 直接打你的後端 API。因此在`Controller`操作資料前，**務必再次檢查 Session 內的權限標記**，不要單純只依賴畫面的防護！
 
-**Thymeleaf 前端範例片段 `member/list.html`**
+**Thymeleaf 前端範例片段`member/list.html`**
 
-以下為簡化版的會員清單頁面，展示 `th:each` 迴圈渲染與 `th:if` 權限判斷如何搭配後端 Controller 串接：
+以下為簡化版的會員清單頁面，展示`th:each`迴圈渲染與`th:if`權限判斷如何搭配後端 Controller 串接：
 
 ```html
 <!-- 會員清單表格 -->
@@ -1251,7 +1251,7 @@ public class MemberController {
 允許使用者客製化個人資料能提升使用體驗。結合前述的檔案上傳與資料庫儲存技巧，能讓我們實作出最常見的會員個人頁面功能。
 
 **📖 核心概念**  
-前端利用 `enctype="multipart/form-data"` 表單傳送圖檔，後端接收 `MultipartFile` 後，轉換為 byte 陣列交由 JPA 儲存進對應的會員實體中。
+前端利用`enctype="multipart/form-data"`表單傳送圖檔，後端接收`MultipartFile`後，轉換為 byte 陣列交由 JPA 儲存進對應的會員實體中。
 
 **💻 實作範例：Service 圖片更新實作**
 
@@ -1293,7 +1293,7 @@ public class MemberController {
 
 |  #  | 對應小節               | 回顧問題                                                                                                    | 參考解答                                                                                                                                                                                                  |
 | :-: | :----------------------- | :-------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  1  | 會員登入與權限分級          | 登入成功後，Controller 如何記住「這個使用者已經登入」？                                                      | 呼叫 `session.setAttribute("loginUser", memberDto)` 將轉換好的安全 DTO 存入 Session。後續請求只需從 Session 取出這個屬性，即可判斷使用者是否已登入及其身分。                                                   |
-|  2  | 會員登入與權限分級          | 為什麼登入驗證的 `login()` 方法要放在 Service 層，而非直接寫在 Controller 中？                              | 依照三層架構原則，帳號密碼的查詢與比對屬於商業邏輯，應由 `@Service` 層負責。Controller 僅負責接收請求參數並將結果轉發給視圖，不應直接操作 Repository 存取資料庫。 |
+|  1  | 會員登入與權限分級          | 登入成功後，Controller 如何記住「這個使用者已經登入」？                                                      | 呼叫`session.setAttribute("loginUser", memberDto)`將轉換好的安全 DTO 存入 Session。後續請求只需從 Session 取出這個屬性，即可判斷使用者是否已登入及其身分。                                                   |
+|  2  | 會員登入與權限分級          | 為什麼登入驗證的`login()`方法要放在 Service 層，而非直接寫在 Controller 中？                              | 依照三層架構原則，帳號密碼的查詢與比對屬於商業邏輯，應由`@Service`層負責。Controller 僅負責接收請求參數並將結果轉發給視圖，不應直接操作 Repository 存取資料庫。 |
 |  3  | CRUD 與權限控管            | 處理資料庫刪除或新增時，為何不能只依賴前端 Thymeleaf 將按鈕隱藏起來？                                      | 前端隱藏只影響一般使用者的視覺效果，惡意使用者仍可手動發送 HTTP 請求。後端 Controller **必須再次檢查 Session 中的管理員權限**才能執行操作。                                                                     |
-|  4  | 大頭貼上傳               | Controller 接收到前端的 `MultipartFile` 後，如何將內容儲存到資料庫實體類別的欄位中？ | 呼叫 `file.getBytes()` 取出 byte 陣列，作為參數傳給 Service。Service 撈出實體類別後，使用 `member.setMemberPhoto()` 賦值，最後透過 Repository 配合 `@Transactional` 儲存進資料庫。 |
+|  4  | 大頭貼上傳               | Controller 接收到前端的`MultipartFile`後，如何將內容儲存到資料庫實體類別的欄位中？ | 呼叫`file.getBytes()`取出 byte 陣列，作為參數傳給 Service。Service 撈出實體類別後，使用`member.setMemberPhoto()`賦值，最後透過 Repository 配合`@Transactional`儲存進資料庫。 |
