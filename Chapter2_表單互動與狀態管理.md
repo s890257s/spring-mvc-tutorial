@@ -89,21 +89,26 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 ### <a id="CH2-1-2"></a>[2. 定義對外入口 @Controller 與 @RestController](#toc)
 
 **📍 單元目標**  
-理解 Controller 的實作方式，並精確區分回傳 View 視圖與純資料格式（Data/API）的應用場景。
+理解 Controller 的實作方式，並區分回傳 View 視圖與 Data 純資料格式的應用場景。
 
 **🤔 為什麼需要它**  
-既然我們需要一位服務生來接待客人並派發任務，在程式碼中，我們就會建立一個帶有特殊標籤的類別來充當這個角色。Controller 就是負責「**接收請求 → 呼叫服務 → 決定回傳方式**」的調度中心。
+在 Web 開發中，我們需要一位「接待員」來接收使用者的 HTTP 請求。在 Spring MVC 中，這個角色就是 Controller。
+隨著技術演進，現代的 Controller 主要需要應付**兩種不同的客人**：
+
+1. **傳統網站使用者**：
+   他們期待拿到一個「完整的 HTML 網頁畫面」，由伺服器直接渲染好，交由瀏覽器解析。
+2. **前端框架 Vue/React 或手機 App**：
+   他們不需要畫面，只要你吐「純資料 (JSON)」給他們自己畫畫面即可。
+
+為了應對這兩種情境，Spring 提供了 `@Controller` 與 `@RestController` 這兩個特殊的標籤來決定回傳方式。
 
 **📖 核心概念**
 
-| 註解標籤          | 主要用途                  | 運作說明                                                                                                                        |
-| :---------------- | :------------------------ | :------------------------------------------------------------------------------------------------------------------------------ |
-|`@Controller`    | 回傳 View 視圖            | 遇見此註解時，Spring MVC 預設將方法的字串回傳值視為「視圖名稱」，並搭配`Model`介面將資料傳遞給 Thymeleaf 等模板引擎進行渲染。 |
-|`@ResponseBody`  | 回傳實體資料              | 應用於不需回傳視圖的場景，將方法的字串或物件回傳值直接寫入 HTTP Response Body 回應主體。通常配合`@Controller`使用。           |
-|`@RestController`| RESTful 風格 API 開發首選 | 等同`@Controller`+`@ResponseBody`的組合。所有方法皆跳過視圖解析，直接回傳 JSON 或純文本。                                   |
-
-> 💡 **彈性的方法參數與自動注入**
-> Spring MVC 具備非常強大的**參數解析器 HandlerMethodArgumentResolver** 機制。當開發者定義`@GetMapping`等方法時，只需在括號內宣告需要的物件型別（例如`Model`、`HttpServletRequest`、`HttpSession`等），Spring 的 DispatcherServlet 就會在請求抵達時**自動發現並注入對應的實體**。這種「需要什麼就宣告什麼」的設計，大幅減少了傳統 Servlet 開發中手動解析資料的繁瑣步驟。
+| 註解標籤          | 主要用途                  | 運作說明                                                                                                                      |
+| :---------------- | :------------------------ | :---------------------------------------------------------------------------------------------------------------------------- |
+| `@Controller`     | 回傳 View 視圖            | 遇見此註解時，Spring MVC 預設將方法的字串回傳值視為「視圖名稱」，並搭配`Model`介面將資料傳遞給 Thymeleaf 等模板引擎進行渲染。 |
+| `@ResponseBody`   | 回傳實體資料              | 應用於不需回傳視圖的場景，將方法的字串或物件回傳值直接寫入 HTTP Response Body 回應主體。通常配合`@Controller`使用。           |
+| `@RestController` | RESTful 風格 API 開發首選 | 等同`@Controller`+`@ResponseBody`的組合。所有方法皆跳過視圖解析，直接回傳 JSON 或純文本。                                     |
 
 **💻 實作範例**
 
@@ -113,8 +118,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.ModelAndView;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -137,14 +140,7 @@ public class PageController {
         return "home";
     }
 
-    // 2. 關於副檔名的補充 (不建議)
-    @GetMapping("/about")
-    public String showAboutPage() {
-        // 直接寫死副檔名(.html)雖可執行，但會增加抽換視圖引擎的耦合度，實務上不建議
-        return "about.html";
-    }
-
-    // 3. 傳遞資料：搭配 Model 傳遞資料至前端 (MVC 主流寫法)
+    // 2. 傳遞資料：搭配 Model 傳遞資料至前端
     @GetMapping("/greeting")
     // 💡 Spring MVC 會自動依照宣告的型別注入實體參數
     public String showGreetingPage(Model model) {
@@ -153,42 +149,32 @@ public class PageController {
         return "greeting-view";
     }
 
-    // 4. 使用 ModelAndView (較早期的寫法)
-    @GetMapping("/legacy-greeting")
-    public ModelAndView showLegacyGreetingPage(ModelAndView mv) {
-        // ModelAndView 負責同時封裝資料與視圖名稱，在比較舊的專案中可能會見到。
-        mv.addObject("message", "Hello from ModelAndView");
-        mv.setViewName("greeting-view");
-        return mv;
-    }
-
-    // 5. 傳遞資料：取得原生 Servlet API 資訊
-    @GetMapping("/client-info")
-    // 若業務需要，也能直接注入原生的 HttpServletRequest 等物件，用來取得較底層的網路資訊
-    public String showClientInfo(HttpServletRequest request, Model model) {
-        String clientIp = request.getRemoteAddr();
-        model.addAttribute("ip", clientIp);
-        return "info-view";
-    }
-
-    // 6. 重新導向 Redirect
-    @GetMapping("/legacy-page")
-    public String redirectToHome() {
-        // 使用 "redirect:" 前綴要求客戶端瀏覽器重新發起 HTTP GET 請求跳轉至新路徑
-        // 💡 關於隱藏在背後的 Forward 與 Redirect 完整跳轉機制及 PRG 模式，將於 2-4 節有深入探討
-        return "redirect:/home";
-    }
-
-    // 7. Controller 中直接回應資料，而非轉向 View
+    // 3. Controller 中直接回應資料，而非轉向 View
     @GetMapping("/simple-data")
-    @ResponseBody // 加入此註解表示「跳過 ViewResolver 視圖解析，直接將 return 內容視為資料體寫入 HTTP 回應主體」
+    @ResponseBody // 告訴 Spring：跳過 ViewResolver 視圖解析，直接將字串寫入 HTTP 回應主體
     public String getSimpleData() {
         return "這是一段純文字資料，並非網頁標籤。";
     }
 }
 ```
 
-> 💡 **知識補充**：Spring MVC 參數「自動注入」背後的秘密
+> 📚 **延伸閱讀：早期 Spring MVC 的回傳風格（ModelAndView）**
+> 在早期的 Spring MVC 專案中，你可能會看到使用 `ModelAndView` 類別的寫法。
+> 它將資料 (`Model`) 與視圖名稱 (`View`) 封裝在同一個物件中回傳：
+>
+> ```java
+> @GetMapping("/legacy-greeting")
+> public ModelAndView showLegacyGreetingPage() {
+>     ModelAndView mv = new ModelAndView();
+>     mv.addObject("message", "Hello from ModelAndView");
+>     mv.setViewName("greeting-view");
+>     return mv;
+> }
+> ```
+>
+> 隨著架構演進，現在主流的開發風格已改為**「回傳字串 (視圖名稱) + 參數注入 Model (資料)」**，這能讓程式碼的意圖更加純粹且易於閱讀。
+
+> 💡 **課外知識補充**：Spring MVC 參數「自動注入」背後的秘密
 > _(此段為底層原理解析，作為課後延伸閱讀，課堂不會特別展開)_
 >
 > 回顧上述範例`showClientInfo(HttpServletRequest request, Model model)`，你可能會好奇：我們明明只有宣告參數，到底是誰幫我們把物件建立好、傳遞進來的？而且這裡直接用具體類別，不需要寫介面型別嗎？
@@ -225,14 +211,13 @@ public class ApiController {
     // 1. 回傳純文本訊息
     @GetMapping("/api/status")
     public String checkSystemStatus() {
-
         return "System is up and running!";
     }
 
     // 2. 自動 JSON 序列化：回傳自訂物件或集合
     @GetMapping("/api/user")
     public Map<String, Object> getUserInfo() {
-        // 在前後端分離或開發提供給手機 App 的介接 API 時，實務上通常會回傳 Map 或自訂物件 (DTO)
+        // 在前後端分離或開發提供給手機 App 的介接 API 時，實務上通常會回傳 Map 或自訂資料載體 DTO
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("id", 101);
         userInfo.put("name", "Alice");
@@ -255,28 +240,24 @@ public class ApiController {
 學習如何利用 HTTP 請求動詞與路徑概念，安全且具結構化地建構路由分層機制。
 
 **🤔 為什麼需要它**  
-若把不同業務邏輯全塞在同一端點，程式碼會難以維護，也可能產生安全疑慮。透過不同的 HTTP 動詞（GET、POST 等），我們可以在相同網址下實現精確的功能分離。
+隨著專案規模擴張，Controller 內的端點數量會快速增加。為了解決這項痛點，我們需要從兩個維度來建立路由規範：
+
+1. **路徑模組化**
+   若所有端點皆手動撰寫 `/api/users` 等重複前綴，不僅缺乏效率，日後修改 API 版本時也極易漏改。透過`@RequestMapping`設定共用基礎路徑，能大幅降低維護成本。
+2. **動詞分流**
+   將「查詢」與「新增」邏輯混在相同端點會引發安全漏洞。藉由明確劃分 HTTP 動詞（`GET`、`POST`），我們能在相同網址下安全隔離不同的業務操作。
 
 **📖 核心概念**  
-現代 Spring 專案中提供直觀且具語義化的註解配置路由端點：
+Spring 提供了一套直覺的標籤來幫我們精確配置路由端點：
 
-- **`@RequestMapping`**
-  通常配置於 Controller 類別層級的頂部，用以定義該類別所管轄的**共用基礎路徑**，協助將路由系統模組化、結構化並防止衝突。
-- **`@GetMapping`**
-  專門處理 HTTP GET 請求。適用於簡單的資料查詢，通常不夾帶敏感資料或大量請求參數，常見如直接透過網址列訪問或是超連結跳轉。
-- **`@PostMapping`**
-  專門處理 HTTP POST 請求。適用於提交含有隱私設定及大量請求參數 Payload的資料操作，通常為前端`<form>`表單送出或資料建立業務。
-- **`@PutMapping`、`@DeleteMapping`與`@PatchMapping`**
-  專門應用於 RESTful API 開發風格中，負責處理資料的修改、更新與刪除操作。因傳統 HTML 表單原生不支援此類動詞，其完整應用與實體架構細節，將於後續的 RESTful API 課程中進行深度介紹。
-- **其他特殊 HTTP 動詞 (`OPTIONS`、`HEAD`等)**
-  若系統需攔截非常見的 HTTP 動詞，可使用泛用註解配合屬性指定（如`@RequestMapping(method = RequestMethod.OPTIONS)`）。此部分同屬進階的網路通訊架構範疇。
-
-> 💡 **觀念補充：HTTP 請求方法總覽與學習地圖**
-> HTTP 協定定義了一組標準動詞用以表示請求意圖。為幫助同學循序漸進，我們將依據傳統網頁與現代化 API 的學習路徑進行分類：
->
-> **📚 階段一（本課程重點）**：`GET`取得資源 +`POST`提交資料。傳統 HTML 表單只支援這兩種動詞，也是我們這門課的核心。
->
-> **🚀 階段二（未來 RESTful 課程）**：加入`PUT`、`PATCH`、`DELETE`，完整對應 CRUD 生命週期，適用於前後端分離的 API 架構。
+- **`@RequestMapping` 定義共用前綴**
+  通常定義在 Controller 類別的最上方，用來定義這個類別管轄的**共用基礎路徑**（例如 `/api/users`）。它能將路由系統模組化，避免在每個方法上重複寫一長串相同的網址。
+- **`@GetMapping` 處理查詢請求**
+  專門處理 HTTP `GET` 請求。適用於單純的資料查詢，通常不夾帶敏感資料。當你在瀏覽器直接輸入網址，或是點擊網頁超連結時，觸發的都是 `GET` 請求。
+- **`@PostMapping` 處理提交請求**
+  專門處理 HTTP `POST` 請求。適用於包含隱私設定或大量資料傳遞的操作，最常見的情境就是前端的 `<form>` 表單送出、或是新增一筆資料到資料庫。
+- **`@PutMapping` 與 `@DeleteMapping`**
+  在 RESTful API 開發風格中，它們專門負責資料的「修改」與「刪除」。因為傳統 HTML 表單原生並不支援這兩種動詞，所以我們會把它的詳細應用，留到後續的 RESTful API 專屬課程再來學習！
 
 **💻 實作範例**
 
@@ -302,38 +283,42 @@ public class UserController {
 }
 ```
 
-> ⚠️ **常見錯誤分析：Method Not Supported 狀態碼 405**
-> 當前端發送的 HTTP 請求動詞（例如使用`<form method="post">`送出表單）與 Controller 端點預期接收的註解動詞（如`@GetMapping`）不匹配時，Spring 框架安全機制會阻擋請求並拋出`405 Method Not Allowed`狀態錯誤。開發過程務必協調確認前後端的通訊方式與介面對齊。
+> 🚨 **常見地雷：Method Not Supported 狀態碼 405**
+> 遇到這個報錯別慌！通常只是前後端沒溝通好。當前端發送的 HTTP 請求動詞（例如使用 `<form method="post">` 送出）與 Controller 預期接收的註解動詞（如 `@GetMapping`）不匹配時，Spring 就會阻擋請求並拋出 `405 Method Not Allowed`。開發時，記得多跟前端確認彼此要用的動詞！
 
-> 💡 **前端技術補充：送出 GET 與 POST 請求的主流方法**
-> 後端定義好 Controller 路由與接收動詞後，前端通常會有以下幾種方式將請求發送至伺服器：
+> 💡 **前端技術補充：送出請求的主流方式**
+> 後端準備好接收動詞後，前端有以下三種常見的發送方式：
 >
 > 1. **傳統 HTML 表單 (`<form>`)**
->    網頁中最基礎的互動方式。透過設定`method="GET"`或`method="POST"`決定請求行為，並由瀏覽器原生行為觸發頁面跳轉與資料提交。
+>    最基礎的作法。直接在標籤設定 `method="GET"` 或 `POST`，送出後瀏覽器會自動跳轉頁面。
 > 2. **原生 Fetch API**
->    現代瀏覽器內建的非同步請求標準。取代了早期的`XMLHttpRequest`Ajax，基於 Promise 語法，常見於輕量級的前端非同步互動。
->   ```javascript
->    fetch("/api/users", {
->      method: "POST",
->      headers: { "Content-Type": "application/json" },
->      body: JSON.stringify(data),
->    }).then((res) => res.json());
->   ```
+>    現代瀏覽器內建的非同步標準。不需要額外安裝套件，適合輕量級的資料互動，不會觸發頁面跳轉。
+>
+> ```javascript
+> fetch("/api/users", {
+>   method: "POST",
+>   headers: { "Content-Type": "application/json" },
+>   body: JSON.stringify(data),
+> }).then((res) => res.json());
+> ```
+>
 > 3. **Axios 套件**
->    目前業界最普遍使用的第三方 HTTP 客戶端工具庫。支援自動轉換 JSON 資料封裝、請求與回應攔截器 Interceptors 等進階功能，在 Vue 或 React 等現代前端框架生態中幾乎是標準連線配置。
->   ```javascript
->    axios.post("/api/users", data).then((res) => console.log(res.data));
->   ```
+>    業界最主流的第三方工具，在 Vue 或 React 開發中幾乎是標配。它會自動幫我們處理 JSON 轉換，語法也比 Fetch 更簡潔。
+>
+> ```javascript
+> axios.post("/api/users", data).then((res) => console.log(res.data));
+> ```
 
 ### 🔁 2-1 章節回顧
 
 |  #  | 對應小節                       | 回顧問題                                                                                       | 參考解答                                                                                                                                                 |
 | :-: | :----------------------------- | :--------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |  1  | 什麼是 MVC 架構？              | 試著用餐廳比喻來解釋 MVC 架構中 Model、View、Controller 各自扮演的角色。                       | Controller 就像服務生負責接待與分流；Model 就像處理好的食材與餐點（資料本體）；View 則是擺盤與呈現方式（網頁）。<br>這樣的設計可達成系統的「職責分離」。 |
-|  2  | @Controller 與 @RestController | 在前後端分離的系統架構中，若後端只需提供 JSON 格式的資料，應該選擇使用哪一個 Controller 註解？ | 應直接採用`@RestController`。它整合了`@ResponseBody`的特性，確保回傳值直接作為資料本體寫入回應，不會被視圖解析器誤判為模板名稱。                      |
-|  3  | @Controller 與 @RestController | 使用`@Controller`時，若方法想回傳純文字資料卻出現了 404 錯誤，最可能的原因為何？             | 忘記標註`@ResponseBody`，導致 Spring 將回傳字串誤判為視圖名稱去搜尋模板。應加上`@ResponseBody`，或直接改用`@RestController`。                         |
-|  4  | @RequestMapping 與路由分流     | 將`@RequestMapping`應用於類別層級的優勢為何？                                                | 主要目的是定義 Controller 的基礎路徑前綴，例如`/api/v1/products`。<br>有效收斂共用路徑，避免在個別端點重複宣告相同的路徑片段，有利於整體路由管理。      |
-|  5  | @RequestMapping 與路由分流     | 在同一個 URL 路徑`/api/users`下，如何讓「查詢列表」與「新增使用者」兩種操作共存而不衝突？    | 透過 HTTP 動詞進行分流。查詢使用`@GetMapping`，新增使用`@PostMapping`，<br>兩者共用相同路徑但依據動詞區隔邏輯。                                        |
+|  2  | @Controller 與 @RestController | 在前後端分離的系統架構中，若後端只需提供 JSON 格式的資料，應該選擇使用哪一個 Controller 註解？ | 應直接採用`@RestController`。它整合了`@ResponseBody`的特性，確保回傳值直接作為資料本體寫入回應，不會被視圖解析器誤判為模板名稱。                         |
+|  3  | @Controller 與 @RestController | 使用`@Controller`時，若方法想回傳純文字資料卻出現了 404 錯誤，最可能的原因為何？               | 忘記標註`@ResponseBody`，導致 Spring 將回傳字串誤判為視圖名稱去搜尋模板。應加上`@ResponseBody`，或直接改用`@RestController`。                            |
+|  4  | @RequestMapping 與路由分流     | 將`@RequestMapping`應用於類別層級的優勢為何？                                                  | 主要目的是定義共用基礎路徑。<br>能避免在每個方法重複手寫相同的網址前綴，日後若需修改 API 版本號也能統一調整，大幅降低維護成本。                          |
+|  5  | @RequestMapping 與路由分流     | 在同一個 URL 路徑`/api/users`下，如何讓「查詢列表」與「新增使用者」兩種操作共存而不衝突？      | 透過 HTTP 動詞進行分流。查詢使用`@GetMapping`，新增使用`@PostMapping`，<br>兩者共用相同路徑但依據動詞區隔邏輯。                                          |
+|  6  | @RequestMapping 與路由分流     | 若前端發送請求後，伺服器回傳了「405 Method Not Allowed」錯誤，最常見的肇因為何？               | 前後端使用的「HTTP 動詞不匹配」。<br>例如前端的 `<form>` 使用了 `POST` 送出，但後端 Controller 卻只配置了 `@GetMapping` 來接收。                         |
 
 ---
 
@@ -455,13 +440,28 @@ public class ProfileController {
 }
 ```
 
+> 📚 **進階補充：取得原生 Servlet API 資訊（HttpServletRequest）**
+> 除了透過標註 `@RequestParam` 讓 Spring 幫我們提取特定參數，有時候業務上會需要獲取更底層的網路連線資訊（例如用戶的 IP 位置、User-Agent 等）。
+> 此時，我們可以直接在方法參數中宣告 `HttpServletRequest`，Spring 會將原生的底層請求物件直接注入進來：
+>
+> ```java
+> @GetMapping("/client-info")
+> public String showClientInfo(HttpServletRequest request, Model model) {
+>     String clientIp = request.getRemoteAddr(); // 取得用戶的 IP
+>     model.addAttribute("ip", clientIp);
+>     return "info-view";
+> }
+> ```
+>
+> 雖然可以直接操作底層物件，但在 Spring 開發中，為了方便進行單元測試與解耦，通常會盡可能優先使用高階的標註（如 `@RequestParam`、`@RequestHeader` 等）來取得所需資料。
+
 ### 🔁 2-2 章節回顧
 
-|  #  | 對應小節      | 回顧問題                                                                                      | 參考解答                                                                                                                                       |
-| :-: | :------------ | :-------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
+|  #  | 對應小節      | 回顧問題                                                                                     | 參考解答                                                                                                                                |
+| :-: | :------------ | :------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
 |  1  | @RequestParam | 針對請求網址`/products/999?discount=true`，欲分別擷取這兩項參數，應使用哪些註解？            | 數字`999`屬於動態路徑變數，須由`@PathVariable`接收解析。<br>`true`歸屬為傳統查詢字串參數，應由`@RequestParam`負責映射。                 |
-|  2  | @RequestParam | 如何使用`@RequestParam`的屬性，以防止因前端參數缺乏導致的系統崩潰？                         | 建議於註解中設定`required = false`或`defaultValue`，<br>確保參數漏失時不會拋出異常，賦予應用程式較佳的安全容錯邊界。                        |
-|  3  | @RequestParam | 若前端透過多選框提交同名參數如`?tag=Java&tag=Spring`，或參數鍵值無法事前確定時，應如何接收？ | 同名參數可直接宣告`List<String>`等集合型態一併接收。<br>若需攔截所有未知參數，則可宣告`Map<String, String>`一次性提取全數鍵值對。          |
+|  2  | @RequestParam | 如何使用`@RequestParam`的屬性，以防止因前端參數缺乏導致的系統崩潰？                          | 建議於註解中設定`required = false`或`defaultValue`，<br>確保參數漏失時不會拋出異常，賦予應用程式較佳的安全容錯邊界。                    |
+|  3  | @RequestParam | 若前端透過多選框提交同名參數如`?tag=Java&tag=Spring`，或參數鍵值無法事前確定時，應如何接收？ | 同名參數可直接宣告`List<String>`等集合型態一併接收。<br>若需攔截所有未知參數，則可宣告`Map<String, String>`一次性提取全數鍵值對。       |
 |  4  | @PathVariable | 若網址包含多重資源節點如`/users/123/orders/A456`，能否同時擷取多個變數？                     | 可以。只需在`@GetMapping`路由中設置多套大括號佔位符如`{userId}`與`{orderId}`，<br>並在方法中宣告對應數量的`@PathVariable`即可同時捕捉。 |
 
 ---
@@ -531,14 +531,16 @@ public class RegisterRequestDTO {
 
 1. **修改`pom.xml`加入依賴**  
    開啟專案根目錄的`pom.xml`，找到`<dependencies>`區塊，並將下方的 Lombok 依賴設定貼上：
-  ```xml
-   	<dependency>
-   		<groupId>org.projectlombok</groupId>
-   		<artifactId>lombok</artifactId>
-   		<!-- 標記為可選依賴：Lombok 僅在編譯期生效幫忙產生程式碼，不會被傳遞給其他引用此專案的模組 -->
-   		<optional>true</optional>
-   	</dependency>
-  ```
+
+```xml
+ 	<dependency>
+ 		<groupId>org.projectlombok</groupId>
+ 		<artifactId>lombok</artifactId>
+ 		<!-- 標記為可選依賴：Lombok 僅在編譯期生效幫忙產生程式碼，不會被傳遞給其他引用此專案的模組 -->
+ 		<optional>true</optional>
+ 	</dependency>
+```
+
 2. **重新載入 Maven 設定**  
    儲存`pom.xml`後，請務必點擊右下角出現的 Maven 同步按鈕或執行「重新載入專案」，確保該函式庫正確下載至本地環境。
 
@@ -567,8 +569,8 @@ public class RegisterRequestDTO {
 > | :----------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
 > | **`@Getter`** / **`@Setter`**  | 掛載於類別上會替全體屬性生成存取方法；掛載於單一屬性則只對該欄位生效。可防止如「訂單成立時間」等不可異動欄位被意外產生 Setter。               |
 > | **`@NoArgsConstructor`**       | 自動生成無參數建構子。這對透過反射機制運作的框架（如 Spring MVC 參數綁定、JPA 實體映射）是不可或缺的基礎元件。                                |
-> | **`@AllArgsConstructor`**      | 自動生成包含全體屬性的全參數建構子，方便在商業邏輯中透過`new`快速初始化完整的物件狀態。                                                     |
-> | **`@RequiredArgsConstructor`** | 專門為`final`或`@NonNull`的必要屬性產生建構子。在現代 Spring 開發中，常用來實現優雅的建構子依賴注入，取代舊有的`@Autowired`寫法。       |
+> | **`@AllArgsConstructor`**      | 自動生成包含全體屬性的全參數建構子，方便在商業邏輯中透過`new`快速初始化完整的物件狀態。                                                       |
+> | **`@RequiredArgsConstructor`** | 專門為`final`或`@NonNull`的必要屬性產生建構子。在現代 Spring 開發中，常用來實現優雅的建構子依賴注入，取代舊有的`@Autowired`寫法。             |
 > | **`@Builder`**                 | 實作建造者設計模式 Builder Pattern，藉由鏈式呼叫建構物件，避免參數順序錯亂的風險。例如：`User.builder().username("Alice").age(25).build();`。 |
 
 DTO 這個「資料容器」準備好之後，接下來的問題是：Spring 要怎麼知道該用什麼方式把前端送來的資料塞進去？這就要看前端是用哪種格式送資料了。
@@ -626,19 +628,19 @@ public class FormAndApiController {
 > **1. 標準 HTML 表單**  
 > 搭配`@ModelAttribute`使用，瀏覽器會將表單內容以`application/x-www-form-urlencoded`原生格式進行提交跳轉。
 >
->```html
+> ```html
 > <form action="/register-form" method="POST">
 >   <input type="text" name="username" placeholder="請輸入帳號" />
 >   <input type="password" name="password" placeholder="請輸入密碼" />
 >   <input type="number" name="age" placeholder="請輸入年齡" />
 >   <button type="submit">送出</button>
 > </form>
->```
+> ```
 >
 > **2. 使用 JS 建立 FormData，並用 Fetch API 送出**  
 > 搭配`@ModelAttribute`使用。透過 FormData 模擬傳統表單封包，適用於不希望頁面跳轉的非同步（AJAX）請求。
 >
->```javascript
+> ```javascript
 > const formData = new FormData();
 > formData.append("username", "Alice");
 > formData.append("password", "123456");
@@ -650,57 +652,57 @@ public class FormAndApiController {
 > })
 >   .then((res) => res.text())
 >   .then((data) => console.log(data));
->```
+> ```
 >
 > **3. 使用 JS 建立 FormData，並用 Axios 送出**  
 > 搭配`@ModelAttribute`使用。Axios 自動處理了傳輸層設定，語法更加簡明直覺。
 >
->```javascript
+> ```javascript
 > const formData = new FormData();
 > formData.append("username", "Bob");
 > formData.append("password", "654321");
 > formData.append("age", "30");
 >
 > axios.post("/register-form", formData).then((res) => console.log(res.data));
->```
+> ```
 >
 > **4. 使用 JS 送出 JSON 字串**  
 > 搭配`@RequestBody`使用。通常用於現代 RESTful API 架構，將前端的 JS 物件轉換為 JSON 格式字串傳送。
 >
 > - **Fetch API 範例**：必須明確宣告`Content-Type`為`application/json`並藉由`JSON.stringify`轉換物件。
 >
->  ```javascript
->   const userData = { username: "Charlie", password: "pwd", age: 22 };
+> ```javascript
+> const userData = { username: "Charlie", password: "pwd", age: 22 };
 >
->   fetch("/api/register", {
->     method: "POST",
->     headers: {
->       "Content-Type": "application/json",
->     },
->     body: JSON.stringify(userData),
->   })
->     .then((res) => res.text())
->     .then((data) => console.log(data));
->  ```
+> fetch("/api/register", {
+>   method: "POST",
+>   headers: {
+>     "Content-Type": "application/json",
+>   },
+>   body: JSON.stringify(userData),
+> })
+>   .then((res) => res.text())
+>   .then((data) => console.log(data));
+> ```
 >
 > - **Axios 範例**：Axios 的物件參數預設會被內部機制序列化為 JSON，並自動掛載所需的 Header 屬性。
 >
->  ```javascript
->   const userData = { username: "Dave", password: "myp", age: 28 };
+> ```javascript
+> const userData = { username: "Dave", password: "myp", age: 28 };
 >
->   axios.post("/api/register", userData).then((res) => console.log(res.data));
->  ```
+> axios.post("/api/register", userData).then((res) => console.log(res.data));
+> ```
 
 ### 🔁 2-3 章節回顧
 
-|  #  | 對應小節                        | 回顧問題                                                                               | 參考解答                                                                                                                                                                         |
-| :-: | :------------------------------ | :------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  1  | DTO 模式與 Lombok               | 當表單欄位很多時，為何不建議繼續用多個`@RequestParam`逐一接收，而要改用 DTO？        | 欄位一多，方法參數列就會嚴重膨脹、難以閱讀與維護。<br>透過 DTO 將所有欄位封裝為單一物件，不僅結構更清晰，後續要新增或調整欄位也更方便。                                          |
-|  2  | DTO 模式與 Lombok               | 為什麼實務上不建議把前端參數直接綁定到資料庫的 Entity 實體？                           | 直接綁定 Entity 會有「過度綁定 Mass Assignment」的安全風險，<br>攻擊者可能在請求中夾帶額外欄位來竄改不該被修改的資料。<br>DTO 作為中間層，只暴露業務所需的欄位，有效收斂攻擊面。 |
-|  3  | DTO 模式與 Lombok               | 引入 Lombok 並在 DTO 類別上加上`@Data`，其主要效益為何？                              | 自動在編譯階段生成屬性的 Getter 與 Setter，以及`toString`、`equals`等基礎方法，<br>大幅減少重複性樣板程式碼的編寫時間。                                                        |
-|  4  | @ModelAttribute 與 @RequestBody | 若系統端點預期接收`application/json`格式資料，後端應配置哪一個註解？                 | 必須使用`@RequestBody`，以指示框架對 HTTP Body 封包執行 JSON 反序列化轉換作業。                                                                                                 |
-|  5  | @ModelAttribute 與 @RequestBody | 若前端透過 Fetch API 傳遞 JSON 資料給後端`@RequestBody`，必須手動處理哪兩項核心設定？ | ① 於請求標頭宣告`'Content-Type': 'application/json'`。<br>② 利用`JSON.stringify()`將 JS 物件轉換為格式字串。<br>若改用 Axios 套件，則會由其內部機制自動完成這兩項工作。       |
-|  6  | @ModelAttribute 與 @RequestBody | 當後端以`@ModelAttribute`接收參數，前端若不希望引發整頁跳轉，應如何處理？            | 應於 JavaScript 中實例化`FormData`物件裝載所有參數鍵值對，<br>並將其作為 Ajax 請求的傳輸主體，藉以模擬傳統 HTML 表單請求行為。                                                 |
+|  #  | 對應小節                        | 回顧問題                                                                              | 參考解答                                                                                                                                                                         |
+| :-: | :------------------------------ | :------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  1  | DTO 模式與 Lombok               | 當表單欄位很多時，為何不建議繼續用多個`@RequestParam`逐一接收，而要改用 DTO？         | 欄位一多，方法參數列就會嚴重膨脹、難以閱讀與維護。<br>透過 DTO 將所有欄位封裝為單一物件，不僅結構更清晰，後續要新增或調整欄位也更方便。                                          |
+|  2  | DTO 模式與 Lombok               | 為什麼實務上不建議把前端參數直接綁定到資料庫的 Entity 實體？                          | 直接綁定 Entity 會有「過度綁定 Mass Assignment」的安全風險，<br>攻擊者可能在請求中夾帶額外欄位來竄改不該被修改的資料。<br>DTO 作為中間層，只暴露業務所需的欄位，有效收斂攻擊面。 |
+|  3  | DTO 模式與 Lombok               | 引入 Lombok 並在 DTO 類別上加上`@Data`，其主要效益為何？                              | 自動在編譯階段生成屬性的 Getter 與 Setter，以及`toString`、`equals`等基礎方法，<br>大幅減少重複性樣板程式碼的編寫時間。                                                          |
+|  4  | @ModelAttribute 與 @RequestBody | 若系統端點預期接收`application/json`格式資料，後端應配置哪一個註解？                  | 必須使用`@RequestBody`，以指示框架對 HTTP Body 封包執行 JSON 反序列化轉換作業。                                                                                                  |
+|  5  | @ModelAttribute 與 @RequestBody | 若前端透過 Fetch API 傳遞 JSON 資料給後端`@RequestBody`，必須手動處理哪兩項核心設定？ | ① 於請求標頭宣告`'Content-Type': 'application/json'`。<br>② 利用`JSON.stringify()`將 JS 物件轉換為格式字串。<br>若改用 Axios 套件，則會由其內部機制自動完成這兩項工作。          |
+|  6  | @ModelAttribute 與 @RequestBody | 當後端以`@ModelAttribute`接收參數，前端若不希望引發整頁跳轉，應如何處理？             | 應於 JavaScript 中實例化`FormData`物件裝載所有參數鍵值對，<br>並將其作為 Ajax 請求的傳輸主體，藉以模擬傳統 HTML 表單請求行為。                                                   |
 
 ---
 
@@ -761,20 +763,20 @@ public class MemberProfileController {
 - **1. 動態文字替換`th:text`**  
   基礎且最常見的用法。伺服器渲染時，標籤內原本寫死的佔位文字，將會被後端傳來的物件屬性完全覆寫。優點是直接在瀏覽器雙擊開啟 HTML 檔案時，畫面會安全地顯示原有的靜態假文案。
 
- ```html
-  <!-- 存取 currentMember 中的 name 屬性。最終原始碼結果為 <span>Alice</span> -->
-  <span th:text="${currentMember.name}"
-    >此處的靜態文字將於伺服器執行時被覆寫</span
-  >
- ```
+```html
+<!-- 存取 currentMember 中的 name 屬性。最終原始碼結果為 <span>Alice</span> -->
+<span th:text="${currentMember.name}"
+  >此處的靜態文字將於伺服器執行時被覆寫</span
+>
+```
 
 - **2. 內聯表示式 Inline Expression`[[${...}]]`**  
   有時候我們只是想在一段文字描述中間，安插幾個小變數；如果為每一個變數都額外包裹一層帶有`th:text`的`<span>`標籤會顯得非常繁瑣。此時可以直接使用`[[...]]`的語法，要求引擎直接在該處印出該屬性的文字。
 
- ```html
-  <!-- 最終結果為 <div>哈囉你好，Alice，歡迎登入系統！</div> -->
-  <div>哈囉你好，[[${currentMember.name}]]，歡迎登入系統！</div>
- ```
+```html
+<!-- 最終結果為 <div>哈囉你好，Alice，歡迎登入系統！</div> -->
+<div>哈囉你好，[[${currentMember.name}]]，歡迎登入系統！</div>
+```
 
 - **3. 動態屬性綁定`th:href`與`th:src`**  
   除了文字，HTML 原生的屬性如 src、href、id 等也能被 Thymeleaf 動態控制。
@@ -782,39 +784,40 @@ public class MemberProfileController {
 
   假設我們的 Spring Boot 專案設定了`server.servlet.context-path=/demo`，請對比有加`@`與沒加`@`的渲染差異：
 
- ```html
-  <!-- ⚠️ 未使用 @：編譯後維持原樣，導致部署時遺失專案前綴而找不到資源 -->
-  <img th:src="${currentMember.avatarUrl}" alt="未加前綴" />
-  <!-- 瀏覽器最終收到的原始碼：<img src="/images/alice.png" /> -->
+```html
+<!-- ⚠️ 未使用 @：編譯後維持原樣，導致部署時遺失專案前綴而找不到資源 -->
+<img th:src="${currentMember.avatarUrl}" alt="未加前綴" />
+<!-- 瀏覽器最終收到的原始碼：<img src="/images/alice.png" /> -->
 
-  <!-- ✅ 使用 @：系統自動補齊專案 Context-Path '/demo' -->
-  <img th:src="@{${currentMember.avatarUrl}}" alt="標準寫法" />
-  <!-- 瀏覽器最終收到的原始碼：<img src="/demo/images/alice.png" /> -->
+<!-- ✅ 使用 @：系統自動補齊專案 Context-Path '/demo' -->
+<img th:src="@{${currentMember.avatarUrl}}" alt="標準寫法" />
+<!-- 瀏覽器最終收到的原始碼：<img src="/demo/images/alice.png" /> -->
 
-  <!-- 應用於動態網址串接：生成會員專屬連結 -->
-  <a th:href="@{'/profile/edit?id=' + ${currentMember.id}}">前往編輯會員資料</a>
-  <!-- 瀏覽器最終收到的原始碼：<a href="/demo/profile/edit?id=101">前往編輯會員資料</a> -->
- ```
+<!-- 應用於動態網址串接：生成會員專屬連結 -->
+<a th:href="@{'/profile/edit?id=' + ${currentMember.id}}">前往編輯會員資料</a>
+<!-- 瀏覽器最終收到的原始碼：<a href="/demo/profile/edit?id=101">前往編輯會員資料</a> -->
+```
 
 - **4. 集合迭代渲染`th:each`**  
   針對 Controller 傳遞過來的集合，可利用「迴圈」的概念有規律地產生相同的 HTML 清單結構元素。
 
- ```html
-  <ul>
-    <!-- "member" 為執行迴圈時的暫存變數，該 <li> 標籤將依據 memberList 的長度自動重複產生 -->
-    <li th:each="member : ${memberList}">
-      會員姓名：[[${member.name}]]，年齡：<span th:text="${member.age}"></span>
-    </li>
-  </ul>
- ```
+```html
+<ul>
+  <!-- "member" 為執行迴圈時的暫存變數，該 <li> 標籤將依據 memberList 的長度自動重複產生 -->
+  <li th:each="member : ${memberList}">
+    會員姓名：[[${member.name}]]，年齡：<span th:text="${member.age}"></span>
+  </li>
+</ul>
+```
 
 - **5. 條件渲染控制`th:if`與`th:unless`**  
   兩者為邏輯相反的條件判斷。當表示式內的邏輯判斷為`true`時，該 HTML 元素區塊才會被渲染並送出到網頁原始碼中；若為 false，整個 DOM 節點會被直接從畫面上移除。
- ```html
-  <!-- 依據會員的年齡屬性進行顯示邏輯判斷 -->
-  <div th:if="${currentMember.age >= 15}">您已符合條件，可執行核心功能。</div>
-  <div th:unless="${currentMember.age >= 15}">您未符合條件，請重新登入。</div>
- ```
+
+```html
+<!-- 依據會員的年齡屬性進行顯示邏輯判斷 -->
+<div th:if="${currentMember.age >= 15}">您已符合條件，可執行核心功能。</div>
+<div th:unless="${currentMember.age >= 15}">您未符合條件，請重新登入。</div>
+```
 
 ### <a id="CH2-4-2"></a>[2. Thymeleaf 表單雙向綁定](#toc)
 
@@ -838,7 +841,7 @@ Thymeleaf 的物件綁定主要是透過三大核心屬性完成：
 
 > 💡 **自動補齊機制的妙用**
 > 當你在輸入框寫下`th:field="*{email}"`時，Thymeleaf 會在網頁編譯時自動轉換成：
->`id="email" name="email" value="後端物件目前的email值"`。
+> `id="email" name="email" value="後端物件目前的email值"`。
 > 這套機制也涵蓋了`<select>`的預設選取，以及`Radio/Checkbox`的`checked`狀態等複雜的 DOM 渲染邏輯，無需開發者手動判斷。
 
 **💻 建立表單專用的資料模型 (DTO)**  
@@ -1035,6 +1038,22 @@ sequenceDiagram
 </div>
 </div>
 
+**💻 實作範例：Spring MVC 的 Redirect 寫法**
+
+在 Controller 中，我們只要在回傳的字串前方加上 `redirect:` 前綴，Spring 就會自動幫我們處理後續的 HTTP 302 狀態碼與跳轉設定：
+
+```java
+@Controller
+public class PageController {
+
+    @GetMapping("/legacy-page")
+    public String redirectToHome() {
+        // 告訴 Spring：發送 302 狀態碼，要求瀏覽器重新發起 GET 請求前往 /home
+        return "redirect:/home";
+    }
+}
+```
+
 **💻 深入底層：手動實作 Redirect 回應**
 
 雖然 Spring MVC 提供了`return "redirect:/xxx"`的便捷寫法，但 Redirect 的底層機制很單純，伺服器只是向瀏覽器回傳一個 **HTTP 302 狀態碼**，並在回應中夾帶目標網址的 **`Location`標頭 Response Header**。
@@ -1105,13 +1124,13 @@ public class ManualRedirectController {
 
 **📊 特性比較總覽**
 
-| 比較項目                  | Forward 請求轉發 (預設行為)                                           | Redirect 重新導向                                                     |
-| :------------------------ | :-------------------------------------------------------------------- | :-------------------------------------------------------------------- |
-| **語法格式範例**          |`return "xxx";`                                                      |`return "redirect:/xxx";`                                            |
-| **實際運作發起地**        | 內部伺服器架構暗中切換分配                                            | 伺服器要求客戶端瀏覽器發起一次全新的 HTTP 請求前往目標端點            |
-| **客戶網址列呈現**        | 網址列不因轉發發生改變                                                | 網址列 會自動更新為新的目標位址                                       |
+| 比較項目                  | Forward 請求轉發 (預設行為)                                         | Redirect 重新導向                                                   |
+| :------------------------ | :------------------------------------------------------------------ | :------------------------------------------------------------------ |
+| **語法格式範例**          | `return "xxx";`                                                     | `return "redirect:/xxx";`                                           |
+| **實際運作發起地**        | 內部伺服器架構暗中切換分配                                          | 伺服器要求客戶端瀏覽器發起一次全新的 HTTP 請求前往目標端點          |
+| **客戶網址列呈現**        | 網址列不因轉發發生改變                                              | 網址列 會自動更新為新的目標位址                                     |
 | **HTTP Request 生命週期** | 視為同一請求延續，原裝載於`Model`的資料可傳遞至下一階段視圖作渲染。 | 屬於全新的獨立連線，上一個端點存放於`Model`內的資料將失效並被清除。 |
-| **典型應用場景**          | 資料檢索、查詢等不變更狀態且適合直接將結果渲染供閱覽的流程            | 涉及資料庫寫入的操作（如新增、更新、刪除）後的跳轉                    |
+| **典型應用場景**          | 資料檢索、查詢等不變更狀態且適合直接將結果渲染供閱覽的流程          | 涉及資料庫寫入的操作（如新增、更新、刪除）後的跳轉                  |
 
 <div style="display: flex; justify-content: center; align-items: end; gap: 80px; margin: 10px 0 10px 0;
 border: 3px solid #ccc; border-radius: 20px; padding: 10px;"> 
@@ -1344,13 +1363,13 @@ public class FileResponseController {
 
 ### 🔁 2-4 章節回顧
 
-|  #  | 對應小節                | 回顧問題                                                                                          | 參考解答                                                                                                                                                                                                                                                                  |
-| :-: | :---------------------- | :------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-|  1  | Thymeleaf 基礎語法      | 開發 Thymeleaf 模板時若需動態輸出集合清單的列結構，應選用哪個屬性？                               | 須使用`th:each="item : ${list}"`對元素進行迴圈覽與重複渲染。                                                                                                                                                                                                            |
-|  2  | Thymeleaf 基礎語法      | 在 Thymeleaf 模板中撰寫路徑網址時，為什麼建議一律使用`@{...}`路徑表達式包覆？                   | 因為伺服器在部署時可能會設定全域的應用程式路徑`Context-Path`。<br>使用`@{...}`能讓框架在轉譯時自動補上專案根路徑前綴，避免因路徑缺漏導致 404 錯誤。                                                                                                                    |
-|  3  | Thymeleaf 表單雙向綁定  | Thymeleaf 表單雙向綁定需搭配哪三個核心屬性？`th:field="*{email}"`在編譯後會自動產生什麼？        | 需搭配`th:action`（指定送出路徑）、`th:object`（綁定 DTO 物件）、`th:field`（綁定個別屬性）。<br>`th:field="*{email}"`編譯後會自動展開為`id="email" name="email" value="目前的email值"`，實現狀態自動回填。                                                            |
-|  4  | Forward 與 Redirect     | 為什麼在執行完 POST 寫入作業後，系統要求使用 Redirect 而非 Forward？                              | 為遵循 PRG 模式，此舉能阻斷瀏覽器停留在高危險的執行狀態端點，<br>杜絕使用者不慎刷新頁面致使表單重複提交的風險。                                                                                                                                                           |
-|  5  | PRG 與 Flash Attributes | 在 PRG 模式中，Redirect 會導致 Model 資料遺失。若仍需在跳轉後顯示一次性提示訊息，應使用什麼機制？ | 應使用`RedirectAttributes`的`addFlashAttribute()`方法。<br>Spring 會將資料暫存於 Session，待第二次 GET 請求抵達時自動取出並注入新的 Model，同時立即銷毀暫存紀錄。                                                                                                     |
+|  #  | 對應小節                | 回顧問題                                                                                          | 參考解答                                                                                                                                                                                                                                                           |
+| :-: | :---------------------- | :------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  1  | Thymeleaf 基礎語法      | 開發 Thymeleaf 模板時若需動態輸出集合清單的列結構，應選用哪個屬性？                               | 須使用`th:each="item : ${list}"`對元素進行迴圈覽與重複渲染。                                                                                                                                                                                                       |
+|  2  | Thymeleaf 基礎語法      | 在 Thymeleaf 模板中撰寫路徑網址時，為什麼建議一律使用`@{...}`路徑表達式包覆？                     | 因為伺服器在部署時可能會設定全域的應用程式路徑`Context-Path`。<br>使用`@{...}`能讓框架在轉譯時自動補上專案根路徑前綴，避免因路徑缺漏導致 404 錯誤。                                                                                                                |
+|  3  | Thymeleaf 表單雙向綁定  | Thymeleaf 表單雙向綁定需搭配哪三個核心屬性？`th:field="*{email}"`在編譯後會自動產生什麼？         | 需搭配`th:action`（指定送出路徑）、`th:object`（綁定 DTO 物件）、`th:field`（綁定個別屬性）。<br>`th:field="*{email}"`編譯後會自動展開為`id="email" name="email" value="目前的email值"`，實現狀態自動回填。                                                        |
+|  4  | Forward 與 Redirect     | 為什麼在執行完 POST 寫入作業後，系統要求使用 Redirect 而非 Forward？                              | 為遵循 PRG 模式，此舉能阻斷瀏覽器停留在高危險的執行狀態端點，<br>杜絕使用者不慎刷新頁面致使表單重複提交的風險。                                                                                                                                                    |
+|  5  | PRG 與 Flash Attributes | 在 PRG 模式中，Redirect 會導致 Model 資料遺失。若仍需在跳轉後顯示一次性提示訊息，應使用什麼機制？ | 應使用`RedirectAttributes`的`addFlashAttribute()`方法。<br>Spring 會將資料暫存於 Session，待第二次 GET 請求抵達時自動取出並注入新的 Model，同時立即銷毀暫存紀錄。                                                                                                  |
 |  6  | 回傳圖片資源            | 若後端需回傳圖片資源給前端顯示，通常有哪兩種常見作法？動態處理多種副檔名時寫法有何差異？          | ① 直接回傳`byte[]`二進位流。格式固定可用`produces`指定；需支援多種格式則改回傳`ResponseEntity<byte[]>`，利用`URLConnection`動態猜測 MIME Type 後手動賦予至 Header。<br>② 將位元陣列經 Base64 編碼轉為字串，封裝於 DTO 及 Model 內，再轉發交由 Thymeleaf 視圖渲染。 |
 
 ---
@@ -1434,11 +1453,11 @@ public class CookieDemoController {
 >
 > 在實務開發上，為防止惡意指令碼（例如跨站腳本攻擊 XSS）透過 JavaScript 的`document.cookie`竊取使用者的身分認證 Cookie，建議包含敏感資訊的 Cookie 都應加上 **`HttpOnly`** 屬性。
 >
->```java
+> ```java
 > Cookie secureCookie = new Cookie("userToken", "abc123xyz");
 > secureCookie.setHttpOnly(true); // 啟用 HttpOnly 防護
 > response.addCookie(secureCookie);
->```
+> ```
 >
 > 當 Cookie 被標示為`HttpOnly`時，它依然會隨著 HTTP 請求自動發送給後端伺服器，但前端的任何 JavaScript 皆無法讀取或修改它，從而大幅提升應用程式的安全性。
 
@@ -1474,20 +1493,20 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
 >
 > 在實務上，預設的`JSESSIONID`名稱會直接暴露我們使用的是 Java 架構，進而增加受到特定框架漏洞攻擊的風險。因此為了隱藏技術棧、降低被針對性攻擊的風險，我們通常會在專案的`application.properties`中修改這個預設的 Cookie 名稱：
 >
->```properties
+> ```properties
 > # 將專案發派的 Session ID 名稱更改為自訂名稱
 > server.servlet.session.cookie.name=MYSESSIONID
->```
+> ```
 
 **📖 Session 基本操作 API 總覽**  
 在 Controller 中，我們只需要在參數宣告`HttpSession`，Spring 就會自動幫我們處理底層金鑰配對的細節。以下是操作 Session 空間最核心的 4 個方法：
 
-| 方法                            | 功能說明                                                                                                 |
-| :------------------------------ | :------------------------------------------------------------------------------------------------------- |
-| **`setAttribute(name, value)`** | 建立或修改資料。將資料存入 Session 空間。如果鍵名已存在，則會覆寫舊資料。                                |
+| 方法                            | 功能說明                                                                                               |
+| :------------------------------ | :----------------------------------------------------------------------------------------------------- |
+| **`setAttribute(name, value)`** | 建立或修改資料。將資料存入 Session 空間。如果鍵名已存在，則會覆寫舊資料。                              |
 | **`getAttribute(name)`**        | 透過鍵名取出資料。由於回傳型態為`Object`，取出後必須自行**強制轉換型別**。若查無此屬性，則回傳`null`。 |
-| **`removeAttribute(name)`**     | 刪除特定鍵名的單一資料。                                                                                 |
-| **`invalidate()`**              | 立即註銷並銷毀該使用者的整個 Session 空間。這是實作登出功能最標準且安全的做法。                          |
+| **`removeAttribute(name)`**     | 刪除特定鍵名的單一資料。                                                                               |
+| **`invalidate()`**              | 立即註銷並銷毀該使用者的整個 Session 空間。這是實作登出功能最標準且安全的做法。                        |
 
 ### <a id="CH2-5-4"></a>[4. 綜合實戰：登入、登出與記住我功能](#toc)
 
@@ -1592,14 +1611,14 @@ public class AuthController {
 
 ### 🔁 2-5 章節回顧
 
-|  #  | 對應小節               | 回顧問題                                                                        | 參考解答                                                                                                                                                                                                                                   |
-| :-: | :--------------------- | :------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  1  | HTTP 無狀態特性        | HTTP 被稱為「無狀態協定」，這對實作購物車或會員登入等功能帶來什麼根本性的挑戰？ | 伺服器回傳資料後即結束連線，不會記住使用者的任何資訊。即使是同一位使用者的連續操作，對伺服器來說都是毫無關聯的獨立事件，因此需要 Cookie 與 Session 機制來補足狀態管理。                                                                    |
-|  2  | Cookie 的操作          | 在 Spring MVC 中，建立 Cookie 與讀取 Cookie 分別使用什麼 API？                  | 建立 Cookie 須透過`HttpServletResponse`的`addCookie()`方法派發。<br>讀取 Cookie 可在方法參數上標註`@CookieValue`註解，Spring 會自動從請求中擷取對應的值。                                                                            |
-|  3  | Cookie 的操作          | 為什麼建議為包含身分認證資訊的 Cookie 加上`HttpOnly`屬性？                    | 加上`HttpOnly`後，該 Cookie 依然會隨 HTTP 請求自動發送給後端，但前端的 JavaScript 將無法透過`document.cookie`讀取或修改它，能有效防範 XSS 跨站腳本攻擊竊取使用者憑證。                                                                 |
+|  #  | 對應小節               | 回顧問題                                                                        | 參考解答                                                                                                                                                                                                                                 |
+| :-: | :--------------------- | :------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  1  | HTTP 無狀態特性        | HTTP 被稱為「無狀態協定」，這對實作購物車或會員登入等功能帶來什麼根本性的挑戰？ | 伺服器回傳資料後即結束連線，不會記住使用者的任何資訊。即使是同一位使用者的連續操作，對伺服器來說都是毫無關聯的獨立事件，因此需要 Cookie 與 Session 機制來補足狀態管理。                                                                  |
+|  2  | Cookie 的操作          | 在 Spring MVC 中，建立 Cookie 與讀取 Cookie 分別使用什麼 API？                  | 建立 Cookie 須透過`HttpServletResponse`的`addCookie()`方法派發。<br>讀取 Cookie 可在方法參數上標註`@CookieValue`註解，Spring 會自動從請求中擷取對應的值。                                                                                |
+|  3  | Cookie 的操作          | 為什麼建議為包含身分認證資訊的 Cookie 加上`HttpOnly`屬性？                      | 加上`HttpOnly`後，該 Cookie 依然會隨 HTTP 請求自動發送給後端，但前端的 JavaScript 將無法透過`document.cookie`讀取或修改它，能有效防範 XSS 跨站腳本攻擊竊取使用者憑證。                                                                   |
 |  4  | Session 的運作與設定   | Session 內部存放資料的識別流程，是依賴哪一項機制才得以運作？                    | 依賴伺服器發給瀏覽器的`JSESSIONID`Cookie 識別碼。<br>藉由比對瀏覽器回傳的這把鑰匙，伺服器才能找到對應的使用者專屬空間。                                                                                                                  |
-|  5  | Cookie 與 Session      | 以功能定位來看，Cookie 與 Session 分別最適用於存放哪些資料？                    | **Session（伺服器端）**：適合儲存會員登入狀態、權限驗證，或容量較大的購物車資料。<br>**Cookie（瀏覽器端）**：適合儲存較無資安疑慮的輔助資訊，例如深色模式偏好、瀏覽語系或廣告追蹤碼。                                                      |
+|  5  | Cookie 與 Session      | 以功能定位來看，Cookie 與 Session 分別最適用於存放哪些資料？                    | **Session（伺服器端）**：適合儲存會員登入狀態、權限驗證，或容量較大的購物車資料。<br>**Cookie（瀏覽器端）**：適合儲存較無資安疑慮的輔助資訊，例如深色模式偏好、瀏覽語系或廣告追蹤碼。                                                    |
 |  6  | 登入、登出與記住我功能 | 若要實作簡易版的「記住我」自動登入功能，可以透過調整什麼機制來達成？            | 可延長伺服器派發的`JSESSIONID`Cookie 存活期，並同步延長伺服器端 Session 壽命。<br>即使關閉瀏覽器，只要未超過設定天數，系統就能依賴這把鑰匙接續先前的登入狀態。<br>⚠️ 需注意無上限延長 Session 會帶來伺服器記憶體極大負擔，實務中應避免。 |
-|  7  | 登入、登出與記住我功能 | 實作安全的登出功能時，為什麼必須同時處理伺服器端與客戶端？                      | 僅呼叫`session.invalidate()`只會銷毀伺服器端的資料，但瀏覽器仍保留著`JSESSIONID`Cookie。<br>必須同時將該 Cookie 設定為過期清除，才能徹底斷開使用者與舊 Session 的關聯，防止殘留鑰匙被濫用。                                            |
+|  7  | 登入、登出與記住我功能 | 實作安全的登出功能時，為什麼必須同時處理伺服器端與客戶端？                      | 僅呼叫`session.invalidate()`只會銷毀伺服器端的資料，但瀏覽器仍保留著`JSESSIONID`Cookie。<br>必須同時將該 Cookie 設定為過期清除，才能徹底斷開使用者與舊 Session 的關聯，防止殘留鑰匙被濫用。                                              |
 
 ---
