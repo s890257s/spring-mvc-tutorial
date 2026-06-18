@@ -18,8 +18,7 @@
   - [1. 認識 Thymeleaf 基礎語法](#CH2-4-1)
   - [2. Thymeleaf 表單雙向綁定](#CH2-4-2)
   - [3. 頁面跳轉機制 Forward 與 Redirect](#CH2-4-3)
-  - [4. 避免重複提交 PRG 模式與 Flash Attributes](#CH2-4-4)
-  - [5. 回傳 HTTP 狀態以及圖片資源的常見處理模式](#CH2-4-5)
+  - [4. 回傳 HTTP 狀態以及圖片資源的常見處理模式](#CH2-4-4)
 - [2-5 記住你是誰：Web 狀態管理 Session 與 Cookie](#CH2-5)
   - [1. 無狀態特性的 HTTP 協定](#CH2-5-1)
   - [2. 客戶端狀態管理 Cookie 的操作](#CH2-5-2)
@@ -396,6 +395,21 @@ public class SearchController {
 }
 ```
 
+> 📚 **補充：取得原生 Servlet API 資訊（HttpServletRequest）**
+> 除了透過標註 `@RequestParam` 讓 Spring 幫我們提取特定參數，有時候業務上會需要獲取更底層的網路連線資訊（例如用戶的 IP 位置、User-Agent 等）。
+> 此時，我們可以直接在方法參數中宣告 `HttpServletRequest`，Spring 會將原生的底層請求物件直接注入進來：
+>
+> ```java
+> @GetMapping("/client-info")
+> public String showClientInfo(HttpServletRequest request, Model model) {
+>     String clientIp = request.getRemoteAddr(); // 取得用戶的 IP
+>     model.addAttribute("ip", clientIp);
+>     return "info-view";
+> }
+> ```
+>
+> 雖然可以直接操作底層物件，但在 Spring 開發中，為了方便進行單元測試與解耦，通常會盡可能優先使用高階的標註（如 `@RequestParam`、`@RequestHeader` 等）來取得所需資料。
+
 學會了從 Query String 中接收參數之後，接下來我們來看另一種更直觀的設計：直接把參數融入網址路徑本身。這兩種方式各有適用場景，往後實務中經常會搭配使用。
 
 ### <a id="CH2-2-2"></a>[2. 動態路徑變數接收 @PathVariable](#toc)
@@ -404,7 +418,7 @@ public class SearchController {
 學會從網址的動態路徑中提取變數，並了解什麼場景適合使用 Path Variable。
 
 **🤔 為什麼需要它**  
-把參數直接放進網址路徑裡（例如將`?userId=123`改寫為`/users/123`），不僅讓網址更好讀、更有語義，對 SEO 搜尋引擎優化也更友善。
+把參數直接放進網址路徑裡（例如將`?userId=123`改寫為`/users/123`），不僅讓網址更好讀、更有語義，對 SEO 搜尋引擎優化也更友善，這也是 **RESTful API 風格** 中非常常用的設計模式。
 
 **📖 核心概念**  
 在`@GetMapping`的路徑中，用大括號`{變數名稱}`來標記動態佔位的位置。接著在方法參數上搭配`@PathVariable`註解，Spring 就會自動把該段路徑的值抓出來，對應到你的變數上。
@@ -440,29 +454,16 @@ public class ProfileController {
 }
 ```
 
-> 📚 **進階補充：取得原生 Servlet API 資訊（HttpServletRequest）**
-> 除了透過標註 `@RequestParam` 讓 Spring 幫我們提取特定參數，有時候業務上會需要獲取更底層的網路連線資訊（例如用戶的 IP 位置、User-Agent 等）。
-> 此時，我們可以直接在方法參數中宣告 `HttpServletRequest`，Spring 會將原生的底層請求物件直接注入進來：
->
-> ```java
-> @GetMapping("/client-info")
-> public String showClientInfo(HttpServletRequest request, Model model) {
->     String clientIp = request.getRemoteAddr(); // 取得用戶的 IP
->     model.addAttribute("ip", clientIp);
->     return "info-view";
-> }
-> ```
->
-> 雖然可以直接操作底層物件，但在 Spring 開發中，為了方便進行單元測試與解耦，通常會盡可能優先使用高階的標註（如 `@RequestParam`、`@RequestHeader` 等）來取得所需資料。
-
 ### 🔁 2-2 章節回顧
 
-|  #  | 對應小節      | 回顧問題                                                                                     | 參考解答                                                                                                                                |
-| :-: | :------------ | :------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
-|  1  | @RequestParam | 針對請求網址`/products/999?discount=true`，欲分別擷取這兩項參數，應使用哪些註解？            | 數字`999`屬於動態路徑變數，須由`@PathVariable`接收解析。<br>`true`歸屬為傳統查詢字串參數，應由`@RequestParam`負責映射。                 |
-|  2  | @RequestParam | 如何使用`@RequestParam`的屬性，以防止因前端參數缺乏導致的系統崩潰？                          | 建議於註解中設定`required = false`或`defaultValue`，<br>確保參數漏失時不會拋出異常，賦予應用程式較佳的安全容錯邊界。                    |
-|  3  | @RequestParam | 若前端透過多選框提交同名參數如`?tag=Java&tag=Spring`，或參數鍵值無法事前確定時，應如何接收？ | 同名參數可直接宣告`List<String>`等集合型態一併接收。<br>若需攔截所有未知參數，則可宣告`Map<String, String>`一次性提取全數鍵值對。       |
-|  4  | @PathVariable | 若網址包含多重資源節點如`/users/123/orders/A456`，能否同時擷取多個變數？                     | 可以。只需在`@GetMapping`路由中設置多套大括號佔位符如`{userId}`與`{orderId}`，<br>並在方法中宣告對應數量的`@PathVariable`即可同時捕捉。 |
+|  #  | 對應小節 | 回顧問題 | 參考解答 |
+| :-: | :--- | :--- | :--- |
+|  1  | 綜合應用 | 針對請求網址`/products/999?discount=true`，欲分別擷取這兩項參數，應使用哪些註解？ | 數字`999`屬於動態路徑變數，須由`@PathVariable`接收解析。<br>`true`歸屬為傳統查詢字串參數，應由`@RequestParam`負責映射。 |
+|  2  | 綜合應用 | 實務上，該如何決定何時要用 `@PathVariable`，何時該用 `@RequestParam`？ | `@PathVariable` 適合用來「**定位特定資源**」（如：查詢特定 ID 的會員）；<br>`@RequestParam` 則適合用於「**附加的條件操作**」，如：過濾、搜尋關鍵字、排序與分頁。 |
+|  3  | @RequestParam | 如何使用`@RequestParam`的屬性，以防止因前端參數缺乏導致的系統崩潰？ | 建議於註解中設定`required = false`或`defaultValue`，<br>確保參數漏失時不會拋出異常，賦予應用程式較佳的安全容錯邊界。 |
+|  4  | @RequestParam | 若前端透過多選框提交同名參數如`?tag=Java&tag=Spring`，或參數鍵值無法事前確定時，應如何接收？ | 同名參數可直接宣告`List<String>`等集合型態一併接收。<br>若需攔截所有未知參數，則可宣告`Map<String, String>`一次性提取全數鍵值對。 |
+|  5  | @PathVariable | 若網址包含多重資源節點如`/users/123/orders/A456`，能否同時擷取多個變數？ | 可以。只需在`@GetMapping`路由中設置多套大括號佔位符如`{userId}`與`{orderId}`，<br>並在方法中宣告對應數量的`@PathVariable`即可同時捕捉。 |
+|  6  | Servlet API | 若業務需求需要取得客戶端的 IP 位置等底層資訊，而非單純的網址參數，可以怎麼做？ | 可直接在方法參數中宣告 `HttpServletRequest`，Spring 會自動注入底層請求物件，接著便能使用 `request.getRemoteAddr()` 等原生方法取得資訊。 |
 
 ---
 
@@ -474,10 +475,32 @@ public class ProfileController {
 學習如何運用 DTO 資料傳輸物件的設計模式，系統化地處理包含多個欄位的複雜表單提交。
 
 **🤔 為什麼需要它**  
-當表單欄位一多，如果還在 Controller 方法裡一個一個用`@RequestParam`接收，參數列很快就會被淹沒。因此，我們需要一種更聰明的做法，直接用一個物件把所有欄位一次打包。
+當表單欄位一多，如果還在 Controller 方法裡一個一個用`@RequestParam`接收，參數列很快就會被淹沒：
+
+```java
+// ❌ 一般寫法：當表單欄位增加時，參數列會變得極度冗長且難以閱讀
+@PostMapping("/register")
+public String register(
+        @RequestParam String username,
+        @RequestParam String password,
+        @RequestParam String email,
+        @RequestParam String phone,
+        @RequestParam String address,
+        @RequestParam Integer age) {
+    // ...
+    return "success";
+}
+```
+
+我們希望最終的程式碼能變得像這樣乾淨：
+```java
+// ✨ 我們的終極目標：用單一物件直接接住所有參數！
+public String register(RegisterRequestDTO formArgs) { ... }
+```
+為了達成這個目標，我們需要一種更聰明的做法：先打造一個專屬的物件，把所有欄位一次打包起來。
 
 **📖 核心概念**  
-在實務上，不建議把前端傳來的參數直接綁定到資料庫的 Entity 實體上，這會有過度綁定的安全風險。因此，我們通常會另外建立一個專門用來搬運資料的類別，稱為 **資料傳輸物件 Data Transfer Object**，簡稱 DTO。它只包含對應的屬性欄位和 Getter/Setter 方法，不涉及任何業務邏輯。
+在實務上，不建議把前端傳來的參數直接綁定到資料庫的 Entity 實體上（也就是直接對應資料庫資料表的 Java 類別），這會有過度綁定的安全風險。因此，我們通常會另外建立一個專門用來搬運資料的類別，稱為 **資料傳輸物件 Data Transfer Object**，簡稱 DTO。它只包含對應的屬性欄位和 Getter/Setter 方法，不涉及任何業務邏輯。
 
 **💻 實作範例一：標準 Java DTO 的冗長痛點**
 
@@ -700,9 +723,11 @@ public class FormAndApiController {
 |  1  | DTO 模式與 Lombok               | 當表單欄位很多時，為何不建議繼續用多個`@RequestParam`逐一接收，而要改用 DTO？         | 欄位一多，方法參數列就會嚴重膨脹、難以閱讀與維護。<br>透過 DTO 將所有欄位封裝為單一物件，不僅結構更清晰，後續要新增或調整欄位也更方便。                                          |
 |  2  | DTO 模式與 Lombok               | 為什麼實務上不建議把前端參數直接綁定到資料庫的 Entity 實體？                          | 直接綁定 Entity 會有「過度綁定 Mass Assignment」的安全風險，<br>攻擊者可能在請求中夾帶額外欄位來竄改不該被修改的資料。<br>DTO 作為中間層，只暴露業務所需的欄位，有效收斂攻擊面。 |
 |  3  | DTO 模式與 Lombok               | 引入 Lombok 並在 DTO 類別上加上`@Data`，其主要效益為何？                              | 自動在編譯階段生成屬性的 Getter 與 Setter，以及`toString`、`equals`等基礎方法，<br>大幅減少重複性樣板程式碼的編寫時間。                                                          |
-|  4  | @ModelAttribute 與 @RequestBody | 若系統端點預期接收`application/json`格式資料，後端應配置哪一個註解？                  | 必須使用`@RequestBody`，以指示框架對 HTTP Body 封包執行 JSON 反序列化轉換作業。                                                                                                  |
-|  5  | @ModelAttribute 與 @RequestBody | 若前端透過 Fetch API 傳遞 JSON 資料給後端`@RequestBody`，必須手動處理哪兩項核心設定？ | ① 於請求標頭宣告`'Content-Type': 'application/json'`。<br>② 利用`JSON.stringify()`將 JS 物件轉換為格式字串。<br>若改用 Axios 套件，則會由其內部機制自動完成這兩項工作。          |
-|  6  | @ModelAttribute 與 @RequestBody | 當後端以`@ModelAttribute`接收參數，前端若不希望引發整頁跳轉，應如何處理？             | 應於 JavaScript 中實例化`FormData`物件裝載所有參數鍵值對，<br>並將其作為 Ajax 請求的傳輸主體，藉以模擬傳統 HTML 表單請求行為。                                                   |
+|  4  | DTO 模式與 Lombok               | 既然 `@Data` 如此方便，為何在嚴謹的專案中，有時會刻意改用 `@Getter` 與特定的建構子？  | 為了遵循「封裝與最小權限」原則。`@Data` 會無條件生成所有 Setter，<br>但如訂單成立時間等屬性不應允許外部隨意修改，精確使用註解能避免資料被意外竄改。                              |
+|  5  | @ModelAttribute 與 @RequestBody | 若前端提交的是標準 HTML 表單（`application/x-www-form-urlencoded`），後端應配置何種註解？ | 應使用 `@ModelAttribute` 來解析標準表單提交與網址查詢字串；<br>若要處理現代 API 的 JSON 格式，才會改用 `@RequestBody`。                                                          |
+|  6  | @ModelAttribute 與 @RequestBody | 若系統端點預期接收`application/json`格式資料，後端應配置哪一個註解？                  | 必須使用`@RequestBody`，以指示框架對 HTTP Body 封包執行 JSON 反序列化轉換作業。                                                                                                  |
+|  7  | @ModelAttribute 與 @RequestBody | 若前端透過 Fetch API 傳遞 JSON 資料給後端`@RequestBody`，必須手動處理哪兩項核心設定？ | ① 於請求標頭宣告`'Content-Type': 'application/json'`。<br>② 利用`JSON.stringify()`將 JS 物件轉換為格式字串。<br>若改用 Axios 套件，則會由其內部機制自動完成這兩項工作。          |
+|  8  | @ModelAttribute 與 @RequestBody | 當後端以`@ModelAttribute`接收參數，前端若不希望引發整頁跳轉，應如何處理？             | 應於 JavaScript 中實例化`FormData`物件裝載所有參數鍵值對，<br>並將其作為 Ajax 請求的傳輸主體，藉以模擬傳統 HTML 表單請求行為。                                                   |
 
 ---
 
@@ -977,7 +1002,7 @@ public class UserUpdateController {
 ```
 
 > 💡 **關於未來的前端技術**
-> 這裡所學習到的`th:field`「雙向綁定」概念非常重要。未來在你學習前端框架 **Vue.js** 時，會接觸到極其相似的 **`v-model`** 指令。雖然一個是在伺服器端渲染 SSR，一個是在客戶端渲染 CSR，但它們解決的核心痛點都是「讓程式變數與 HTML 畫面狀態保持一致」。掌握了現在的邏輯，未來轉職全端開發時將會無縫接軌。
+> 這裡所學習到的`th:field`「雙向綁定」概念非常重要。未來在你學習前端框架 **Vue.js** 時，會接觸到極其相似的 **`v-model`** 指令。雖然一個是在伺服器端渲染 SSR，一個是在客戶端渲染 CSR，但它們解決的核心痛點都是「讓程式變數與 HTML 畫面狀態保持一致」。掌握了現在的邏輯，未來轉為全端開發時將會更容易上手。
 
 ### <a id="CH2-4-3"></a>[3. 頁面跳轉機制 Forward 與 Redirect](#toc)
 
@@ -985,7 +1010,7 @@ public class UserUpdateController {
 了解 Forward 請求轉發與 Redirect 重新導向兩種跳轉方式的底層機制差異與適用場景。
 
 **🤔 為什麼需要它**  
-Controller 處理完請求後，要把結果畫面送給使用者有「兩種方法」可以走。選錯方法不只會讓網址列顯示錯誤，嚴重的話還會導致使用者按 F5 重新整理時不小心重複提交表單。搞懂這兩種機制，才能在不同情境下做出正確的選擇。
+在 Spring MVC 中，處理完邏輯後，我們有時需要將任務「交棒」。如果只是單純把資料交給內部的 HTML 樣板去畫畫面，我們使用 **Forward**；但如果在實務上，我們需要將使用者導向至外部的網站（例如：**跳轉到綠界金流付款頁面、或是前往 Google 進行第三方登入**），我們就必須學會發動 HTTP 標準的 **Redirect (重新導向)** 機制。搞懂兩者差異，是未來開發 API 與串接第三方服務的重要基礎。
 
 **📖 核心概念**  
 在 Controller 常見的`return "success-page";`寫法，實際上隱含呼叫了 Spring 的 **請求轉發 Forward** 機制。相對應的另一主流機制為 **重新導向 Redirect**。兩者的底層運作流程與特性截然不同：
@@ -1103,7 +1128,7 @@ public class ManualRedirectController {
 > | 狀態碼                       | 遇到 POST 時的行為                   | 實務常見情境                                                          |
 > | :--------------------------- | :----------------------------------- | :-------------------------------------------------------------------- |
 > | **`302 Found`**              | 行為模糊，但現今瀏覽器皆預設轉為 GET | 一般暫時性頁面跳轉                                                    |
-> | **`303 See Other`**          | **強制轉為 GET**                     | 結帳完成後跳至訂單頁，完美符合 **PRG 模式**                           |
+> | **`303 See Other`**          | **強制轉為 GET**                     | 明確要求客戶端以 GET 方式前往新網址                                   |
 > | **`307 Temporary Redirect`** | **嚴格保持 POST**                    | API 端點暫時更換網址，需確保客戶端以原 POST 將 Payload 完整送至新目標 |
 >
 > **【4xx 客戶端錯誤系列】**
@@ -1144,121 +1169,7 @@ border: 3px solid #ccc; border-radius: 20px; padding: 10px;">
   </div>
 </div>
 
-### <a id="CH2-4-4"></a>[4. 避免重複提交 PRG 模式與 Flash Attributes](#toc)
-
-**📍 單元目標**  
-理解防範表單重複提交的標準做法：PRG Post-Redirect-Get 設計模式。
-
-**🤔 為什麼需要它**  
-若在處理寫入資料的 POST 方法後，直接預設將畫面 Forward 給使用者（例如`return "checkout-success"`），雖然當下瀏覽器顯示成功頁面，但其底層路由依舊停留在帶有執行寫入指令的 POST 端點`/checkout`。
-此時若客戶端按下「瀏覽器重新整理（F5）」按鈕，瀏覽器將基於其保留的狀態，**強制再次送出該 POST 請求**。這將引發危險的「雙重扣款」或「訂單重複建立」等業務災難與資料庫異常。
-
-**📖 核心概念**  
-為了徹底避免這個問題，業界普遍採用 **PRG Post-Redirect-Get** 模式作為防護準則。核心規範很簡單：**凡是會修改資料的 POST 請求，處理完後一律禁止使用 Forward 直接顯示結果畫面，必須改用 Redirect，讓瀏覽器發起全新的 GET 請求來載入結果頁。** 換句話說：
-
-1. GET 請求可使用 Forward 與 Redirect。
-2. POST 請求只能使用 Redirect。
-
-<div style="display: flex; flex-direction: column; justify-content: center; align-items: center;  margin: 10px 0 10px 0;
-border: 3px solid #ccc; border-radius: 20px; padding: 10px;"> 
-  <div style="background-color:#FFFFFF; border-radius: 10px; width:80%;text-align: center;">
-    <img src="./images/ch2/prg.webp" width="600" >
-  </div>
-  <p style="margin-top: 10px;"><i>PRG 模式示意圖</i></p>
-</div>
-
-**💡 關於 PRG 模式下，顯示訊息的技術：Flash Attributes**  
-採用 PRG 模式後，會遇到一個問題：Redirect 是一次全新的請求，原本放在`Model`裡想傳給成功畫面的提示訊息，會在跳轉時被清空。
-要解決這個問題，我們需要改用`RedirectAttributes`介面提供的 **Flash Attributes** 機制。
-
-既然 Redirect 是一次全新的獨立請求，這些資料究竟被藏在哪裡？實際上，Spring MVC 在底層會暫時借用伺服器的「**會話記憶體（稍後章節會詳細介紹的 Session 機制）**」來保管這些 Flash Attributes。
-當瀏覽器發起第二次的 GET 請求並抵達目標端點時，Spring 會自動將這些資料從會話記憶體中取出，並**立即銷毀**原有的暫存紀錄（這也是被稱為 Flash 快閃的原因），最後乾淨俐落地將資料轉移進這次全新的`Model`中供 View 渲染。
-
-<div align="center" >
-<div style="background-color: white; border-radius: 20px; width: 80%;">
-
-```mermaid
-%%{init: { 'theme': 'forest' } }%%
-sequenceDiagram
-    participant Client as 瀏覽器 (Client)
-    participant Server as Spring MVC 伺服器
-    participant Session as 伺服器暫存區 (Session)
-
-    Client->>Server: 1. 發送 POST 請求更新資料
-    Note over Server: Controller 處理完畢，將準備好的<br/>Flash Attribute 交給底層
-    Server->>Session: 2. 暫時將資料寄放到 Session 中
-    Server-->>Client: 3. 回傳 302 狀態與目標網址 (Redirect)
-
-    Client->>Server: 4. 發起第二次全新的 GET 請求
-    Server->>Session: 5. 提取剛才的資料，並從 Session 銷毀
-    Session->>Server:
-    Note over Server: 自動將取出的屬性注入<br/>本次全新請求的 Model 中
-    Server->>Server: 內部轉發給 View
-    Note over Server: View 從新的 Model 中取得資料並渲染
-    Server-->>Client: 6. 回傳帶有提示訊息的 HTML 畫面
-```
-
-</div>
-</div>
-
-**💻 使用情境與實作範例：提示修改使用者資訊成功**  
-最常見的使用情境便是「表單送出成功後，跳轉回主頁面並顯示一次性的成功提示文字」。我們以更新使用者資料為例：
-
-**1. 後端 Controller 實作**
-
-```java
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-@Controller
-public class UserProfileController {
-
-    // 階段一：受理來自客戶端的表單更新 POST 請求
-    @PostMapping("/profile/update")
-    public String updateProfile(RedirectAttributes redirectAttrs) {
-
-        // 1. 執行業務邏輯，將新資料存入資料庫...
-
-        // 2. 由於即將採用 Redirect，必須捨棄 Model，改用 Flash Attributes 挾帶提示文字
-        redirectAttrs.addFlashAttribute("successMsg", "個人資料已成功更新！");
-
-        // 3. 嚴謹遵守 PRG 模式規範，重新導向回個人主頁 (GET)
-        return "redirect:/profile";
-    }
-
-    // 階段二：獨立負責呈現畫面的 GET 端點
-    @GetMapping("/profile")
-    public String showProfile() {
-
-        // 此處不需針對 Flash Attribute 特別撰寫接收邏輯，
-        // Spring 會自動從底層暫存區提取 "successMsg" 並轉存入 Model 中供視圖解析。
-        return "profile-view";
-    }
-}
-```
-
-**2. 前端 Thymeleaf 接收與渲染**
-在`profile-view.html`樣板中，我們可以搭配`th:if`條件判斷式。只有當 Flash Attribute 中確實存在`successMsg`這個變數時，才將提示的 HTML 標籤區塊渲染出來。一旦使用者再次刷新此頁面，因為 Flash Attribute 已被清空，該提示框就會自動消失。
-
-```html
-<!-- 使用 th:if 檢查變數是否存在，若存在則顯示綠色提示橫幅 -->
-<div
-  th:if="${successMsg}"
-  style="color: green; border: 1px solid green; padding: 10px; margin-bottom: 20px;"
->
-  [[${successMsg}]]
-</div>
-
-<!-- 正常的個人資料顯示區塊... -->
-<div>
-  <h3>會員中心</h3>
-  <p>歡迎回來！</p>
-</div>
-```
-
-### <a id="CH2-4-5"></a>[5. 回傳 HTTP 狀態以及圖片資源的常見處理模式](#toc)
+### <a id="CH2-4-4"></a>[4. 回傳 HTTP 狀態以及圖片資源的常見處理模式](#toc)
 
 **📍 單元目標**  
 在熟悉了標準的 MVC 視圖渲染流程後，作為補充，學會如何處理自訂的 HTTP Response 狀態，以及如何在後端處理與回傳二進位資源給前端介面。
@@ -1267,7 +1178,7 @@ public class UserProfileController {
 雖然傳統 MVC 以渲染 HTML 畫面為主，但在許多實務場景中（例如動態產生圖形驗證碼 CAPTCHA、從伺服器特定資料夾讀取照片直接展示），我們無法單靠靜態路由`<img src="...">`存取。這時需要在後端透過程式邏輯，將圖片轉換為二進位資料流或是文字編碼後，再傳遞給前端顯示。
 
 **📖 核心概念與實作**  
-實務上，處理圖片回傳有兩種常見的模式：
+要在後端把圖片變成程式碼傳遞，聽起來好像有點可怕？別擔心，實務上我們通常只會用到以下兩種標準模式，只要照著套用即可：
 
 **模式一：透過`@ResponseBody`與`byte[]`直接回傳二進位流 (適用於大檔或常規圖片)**  
 當我們在 Controller 方法加上`@ResponseBody`註解時，Spring MVC 就不會去尋找 HTML 樣板，而是將方法的 return 內容直接寫入 HTTP Response Body 中。
@@ -1368,9 +1279,7 @@ public class FileResponseController {
 |  1  | Thymeleaf 基礎語法      | 開發 Thymeleaf 模板時若需動態輸出集合清單的列結構，應選用哪個屬性？                               | 須使用`th:each="item : ${list}"`對元素進行迴圈覽與重複渲染。                                                                                                                                                                                                       |
 |  2  | Thymeleaf 基礎語法      | 在 Thymeleaf 模板中撰寫路徑網址時，為什麼建議一律使用`@{...}`路徑表達式包覆？                     | 因為伺服器在部署時可能會設定全域的應用程式路徑`Context-Path`。<br>使用`@{...}`能讓框架在轉譯時自動補上專案根路徑前綴，避免因路徑缺漏導致 404 錯誤。                                                                                                                |
 |  3  | Thymeleaf 表單雙向綁定  | Thymeleaf 表單雙向綁定需搭配哪三個核心屬性？`th:field="*{email}"`在編譯後會自動產生什麼？         | 需搭配`th:action`（指定送出路徑）、`th:object`（綁定 DTO 物件）、`th:field`（綁定個別屬性）。<br>`th:field="*{email}"`編譯後會自動展開為`id="email" name="email" value="目前的email值"`，實現狀態自動回填。                                                        |
-|  4  | Forward 與 Redirect     | 為什麼在執行完 POST 寫入作業後，系統要求使用 Redirect 而非 Forward？                              | 為遵循 PRG 模式，此舉能阻斷瀏覽器停留在高危險的執行狀態端點，<br>杜絕使用者不慎刷新頁面致使表單重複提交的風險。                                                                                                                                                    |
-|  5  | PRG 與 Flash Attributes | 在 PRG 模式中，Redirect 會導致 Model 資料遺失。若仍需在跳轉後顯示一次性提示訊息，應使用什麼機制？ | 應使用`RedirectAttributes`的`addFlashAttribute()`方法。<br>Spring 會將資料暫存於 Session，待第二次 GET 請求抵達時自動取出並注入新的 Model，同時立即銷毀暫存紀錄。                                                                                                  |
-|  6  | 回傳圖片資源            | 若後端需回傳圖片資源給前端顯示，通常有哪兩種常見作法？動態處理多種副檔名時寫法有何差異？          | ① 直接回傳`byte[]`二進位流。格式固定可用`produces`指定；需支援多種格式則改回傳`ResponseEntity<byte[]>`，利用`URLConnection`動態猜測 MIME Type 後手動賦予至 Header。<br>② 將位元陣列經 Base64 編碼轉為字串，封裝於 DTO 及 Model 內，再轉發交由 Thymeleaf 視圖渲染。 |
+|  4  | 回傳圖片資源            | 若後端需回傳圖片資源給前端顯示，通常有哪兩種常見作法？動態處理多種副檔名時寫法有何差異？          | ① 直接回傳`byte[]`二進位流。格式固定可用`produces`指定；需支援多種格式則改回傳`ResponseEntity<byte[]>`，利用`URLConnection`動態猜測 MIME Type 後手動賦予至 Header。<br>② 將位元陣列經 Base64 編碼轉為字串，封裝於 DTO 及 Model 內，再轉發交由 Thymeleaf 視圖渲染。 |
 
 ---
 
